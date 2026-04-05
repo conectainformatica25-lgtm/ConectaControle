@@ -60,9 +60,11 @@ export function RegisterCompanyScreen() {
             />
             <Field label="Senha" value={password} onChangeText={setPassword} secure />
             {err ? (
-              <Text color="$red500" size="sm">
-                {err}
-              </Text>
+              <Box bg="$red100" p="$3" rounded="$sm" mb="$2">
+                <Text color="$red700" size="sm" fontWeight="$bold">
+                  Erro: {err}
+                </Text>
+              </Box>
             ) : null}
             <AppButton
               disabled={loading}

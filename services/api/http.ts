@@ -13,25 +13,46 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
 
-  if (res.status === 401 && token) {
-    await clearStoredToken();
+    if (res.status === 401 && token) {
+      await clearStoredToken();
+    }
+
+    const text = await res.text();
+    let json: any = {};
+    try {
+      json = text ? JSON.parse(text) : {};
+    } catch (parseErr) {
+      console.error('[API] Resposta não é um JSON válido:', text.substring(0, 100));
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        throw new Error(
+          'O servidor retornou uma página HTML em vez de JSON. Isso geralmente significa que a URL da API está errada (apontando para o frontend).'
+        );
+      }
+      throw new Error('Erro ao processar resposta do servidor (JSON inválido).');
+    }
+
+    if (!res.ok) {
+      const msg = (json as { error?: string }).error ?? res.statusText;
+      throw new Error(msg);
+    }
+
+    return json as T;
+  } catch (err: any) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      console.error(`[API] Erro de rede ao acessar: ${url}`, err);
+      throw new Error(
+        'Não foi possível conectar ao servidor. Verifique sua conexão e se o endereço da API está correto.'
+      );
+    }
+    throw err;
   }
-
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : {};
-
-  if (!res.ok) {
-    const msg = (json as { error?: string }).error ?? res.statusText;
-    throw new Error(msg);
-  }
-
-  return json as T;
 }
 
 export async function apiGet<T>(path: string): Promise<T> {

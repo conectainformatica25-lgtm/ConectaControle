@@ -13,3 +13,12 @@ export const pool = new Pool({
     ? { rejectUnauthorized: false }
     : false,
 });
+
+// Test connection on startup
+pool.query('SELECT now()', (err, res) => {
+  if (err) {
+    console.error('[DB] Connection failed on startup:', err.message);
+  } else {
+    console.log('[DB] Connected successfully at:', res.rows[0].now);
+  }
+});

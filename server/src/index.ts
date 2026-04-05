@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
+import { pool } from './db.js';
 import { authRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { productsRouter } from './routes/products.js';
@@ -21,8 +22,24 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.get('/', (_req, res) => res.send('ConectaControle API is running! Check /health for status.'));
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.send('ConectaControle API is running! Database is CONNECTED. Check /health for status.');
+  } catch (err) {
+    console.error('Database connection failed on / root:', err);
+    res.status(500).send('ConectaControle API is running but DATABASE IS DISCONNECTED!');
+  }
+});
+
+app.get('/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true, db: 'connected' });
+  } catch (err) {
+    res.status(500).json({ ok: false, db: 'disconnected', error: String(err) });
+  }
+});
 
 app.use('/api', authRouter);
 app.use('/api', meRouter);
@@ -34,8 +51,8 @@ app.use('/api', companyRouter);
 app.use('/api', reportsRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: 'internal_error' });
+  console.error('[Unhandled Error]', err);
+  res.status(500).json({ error: 'internal_error', message: err.message });
 });
 
 app.listen(port, '0.0.0.0', () => {

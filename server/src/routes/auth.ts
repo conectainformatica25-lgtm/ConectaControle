@@ -42,33 +42,46 @@ authRouter.post('/login', async (req, res, next) => {
 });
 
 authRouter.post('/register-company', async (req, res, next) => {
+  const { email, password, companyName, slug, fullName } = req.body ?? {};
+  console.log(`[Auth] Iniciando registro: email=${email}, company=${companyName}`);
+
+  if (!email || !password || !companyName || !fullName) {
+    console.warn('[Auth] Campos obrigatórios faltando para registro');
+    res.status(400).json({ error: 'missing_fields' });
+    return;
+  }
+
   const client = await pool.connect();
   try {
-    const { email, password, companyName, slug, fullName } = req.body ?? {};
-    if (!email || !password || !companyName || !fullName) {
-      res.status(400).json({ error: 'missing_fields' });
-      return;
-    }
     const em = String(email).trim().toLowerCase();
     const exists = await client.query(`SELECT 1 FROM users WHERE email = $1`, [em]);
     if (exists.rowCount && exists.rowCount > 0) {
+      console.warn(`[Auth] Email já existe: ${em}`);
       res.status(409).json({ error: 'email_in_use' });
       return;
     }
+
     const hash = await bcrypt.hash(String(password), 10);
     await client.query('BEGIN');
+
+    console.log('[Auth] Criando empresa...');
     const c = await client.query(
       `INSERT INTO companies (name, slug) VALUES ($1, $2) RETURNING id`,
       [String(companyName).trim(), slug ? String(slug).trim() : null]
     );
     const companyId = c.rows[0].id;
+
+    console.log(`[Auth] Criando usuário admin para empresa ${companyId}...`);
     const u = await client.query(
       `INSERT INTO users (company_id, email, password_hash, full_name, role)
        VALUES ($1, $2, $3, $4, 'admin') RETURNING id`,
       [companyId, em, hash, String(fullName).trim()]
     );
     const userId = u.rows[0].id;
+
     await client.query('COMMIT');
+    console.log('[Auth] Registro concluído com sucesso');
+
     const token = signToken(userId, companyId);
     res.status(201).json({
       token,
@@ -80,10 +93,11 @@ authRouter.post('/register-company', async (req, res, next) => {
       },
     });
   } catch (e) {
+    console.error('[Auth] Erro no registro:', e);
     try {
       await client.query('ROLLBACK');
-    } catch {
-      /* ignore */
+    } catch (rbErr) {
+      console.error('[Auth] Falha no ROLLBACK:', rbErr);
     }
     next(e);
   } finally {
