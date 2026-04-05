@@ -29,7 +29,7 @@ export function RegisterCompanyScreen() {
     try {
       await authService.registerCompany({
         companyName: companyName.trim(),
-        slug: slug.trim(),
+        slug: slug.trim() || undefined as any,
         fullName: fullName.trim(),
         email: email.trim(),
         password,

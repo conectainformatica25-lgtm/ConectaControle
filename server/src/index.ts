@@ -14,8 +14,14 @@ import { reportsRouter } from './routes/reports.js';
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
 
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept']
+}));
 app.use(express.json({ limit: '2mb' }));
+
 
 app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);

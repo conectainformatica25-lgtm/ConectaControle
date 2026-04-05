@@ -13,12 +13,18 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
   try {
     const res = await fetch(url, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
 
     if (res.status === 401 && token) {
       await clearStoredToken();
@@ -46,6 +52,11 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     return json as T;
   } catch (err: any) {
     console.error(`[API] Erro na requisição ${method} ${url}:`, err.message);
+    if (err.name === 'AbortError') {
+      throw new Error(
+        `A requisição para ${url} demorou muito e foi cancelada (timeout). Se o backend estiver no plano 'Free' do Render, ele pode levar até 1 minuto para 'acordar'. Tente novamente em instantes.`
+      );
+    }
     if (err instanceof TypeError && err.message.includes('fetch')) {
       throw new Error(
         `Não foi possível conectar a ${url}. Verifique sua conexão e se o endereço da API está correto.`
@@ -54,6 +65,7 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     throw err;
   }
 }
+
 
 export async function apiGet<T>(path: string): Promise<T> {
   return request<T>('GET', path);

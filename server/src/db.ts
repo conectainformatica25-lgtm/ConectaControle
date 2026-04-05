@@ -9,10 +9,13 @@ if (!process.env.DATABASE_URL) {
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
   ssl: process.env.DATABASE_URL?.includes('render.com') || process.env.DATABASE_URL?.includes('supabase.co')
     ? { rejectUnauthorized: false }
     : false,
 });
+
 
 // Test connection on startup
 pool.query('SELECT now()', (err, res) => {
