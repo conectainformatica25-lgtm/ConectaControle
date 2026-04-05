@@ -16,6 +16,12 @@ import { useAuthStore } from '@/store/authStore';
 import type { Company, Profile } from '@/types/models';
 
 function mapCompany(row: Record<string, unknown>): Company {
+  let trialEndsStr = row.trial_ends_at as string | undefined;
+  if (!trialEndsStr) {
+    const createdAt = row.created_at ? new Date(row.created_at as string) : new Date();
+    trialEndsStr = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  }
+
   return {
     id: row.id as string,
     name: row.name as string,
@@ -24,7 +30,7 @@ function mapCompany(row: Record<string, unknown>): Company {
     brand_secondary: (row.brand_secondary as string) ?? null,
     low_stock_threshold: Number(row.low_stock_threshold ?? 5),
     status: (row.status as any) ?? 'trial',
-    trial_ends_at: (row.trial_ends_at as string) ?? new Date().toISOString(),
+    trial_ends_at: trialEndsStr,
     expires_at: (row.expires_at as string) ?? null,
   };
 }

@@ -2,14 +2,17 @@ import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
 import { updateCompany } from '@/services/mock/memoryStore';
-import { Box, Heading, HStack, Text, VStack, Divider } from '@gluestack-ui/themed';
+import { Box, Heading, HStack, Text, VStack, Divider, Image } from '@gluestack-ui/themed';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Clipboard } from 'react-native';
+
+const PAGBANK_TOKEN = 'd9e40d72-9844-4c13-86bc-3d4d16b115127b613b124ac6afb11173b75ab00cd242e6df-f9cf-4274-bf84-60075664f1a7';
 
 export function SubscriptionScreen() {
   const company = useAuthStore((s) => s.company);
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [pixData, setPixData] = useState<{ text: string; imageUrl?: string } | null>(null);
 
   if (!company) return null;
 
@@ -20,12 +23,66 @@ export function SubscriptionScreen() {
   const isExpired = diffDays <= 0;
 
   async function handlePay() {
+    if (!company) return;
     setLoading(true);
-    // Simulating PagSeguro API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('https://api.pagseguro.com/orders', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PAGBANK_TOKEN}`,
+          'Content-Type': 'application/json',
+          'Accept': '*/*'
+        },
+        body: JSON.stringify({
+          reference_id: `sub_${company.id}_${Date.now()}`,
+          customer: {
+            name: company.name || 'Cliente ConectaControle',
+            email: 'contato@conectacontrole.com.br',
+            tax_id: '00000000000',
+            phones: [
+              {
+                country: "55",
+                area: "11",
+                number: "999999999",
+                type: "MOBILE"
+              }
+            ]
+          },
+          items: [
+            {
+              reference_id: "plan_mensal",
+              name: "Assinatura Mensal ConectaControle",
+              quantity: 1,
+              unit_amount: 3999
+            }
+          ],
+          qr_codes: [
+            {
+              amount: {
+                value: 3999
+              }
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.qr_codes && data.qr_codes.length > 0) {
+        const qrCode = data.qr_codes[0];
+        const imageUrl = qrCode.links?.find((l: any) => l.rel === 'QRCODE.PNG')?.href;
+        setPixData({ text: qrCode.text, imageUrl });
+        setShowQR(true);
+      } else {
+        console.error('PagBank Erro:', data);
+        Alert.alert('Erro', 'Não foi possível gerar a cobrança. Tente novamente mais tarde.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Erro', 'Erro de conexão.');
+    } finally {
       setLoading(false);
-      setShowQR(true);
-    }, 1500);
+    }
   }
 
   async function confirmPayment() {
@@ -98,7 +155,7 @@ export function SubscriptionScreen() {
             <Box bg="$primary50" p="$4" borderRadius="$lg" borderWidth={1} borderColor="$primary200">
               <VStack space="xs">
                 <Text fontWeight="$bold" color="$primary700">Plano Mensal Profissional</Text>
-                <Text size="sm" color="$primary600">Acesso completo por apenas R$ 49,90/mês</Text>
+                <Text size="sm" color="$primary600">Acesso completo por apenas R$ 39,99/mês</Text>
               </VStack>
             </Box>
             
@@ -111,11 +168,43 @@ export function SubscriptionScreen() {
         ) : (
           <VStack space="xl" alignItems="center" bg="$white" p="$6" borderRadius="$xl" borderWidth={1} borderColor="$primary200">
             <Heading size="md">Pagamento via PIX</Heading>
-            <Box bg="$gray100" w={200} h={200} justifyContent="center" alignItems="center" borderRadius="$lg">
-               <Text textAlign="center" size="xs" color="$textLight400">[QR CODE PIX PAGSEGURO]</Text>
-            </Box>
-            <Text textAlign="center" size="sm" color="$textLight600">
-              Escaneie o código acima no app do seu banco para ativar sua conta instantaneamente.
+            {pixData?.imageUrl ? (
+              <Image 
+                source={{ uri: pixData.imageUrl }} 
+                alt="QR Code PIX" 
+                style={{ width: 200, height: 200, borderRadius: 8 }}
+              />
+            ) : (
+              <Box bg="$gray100" width={200} height={200} justifyContent="center" alignItems="center" borderRadius="$lg">
+                 <Text textAlign="center" size="xs" color="$textLight400">QR CODE</Text>
+              </Box>
+            )}
+            
+            <VStack space="sm" w="$full" alignItems="center">
+              <Text textAlign="center" size="sm" color="$textLight600">
+                Ou utilize o recurso "Pix Copia e Cola":
+              </Text>
+              {pixData?.text && (
+                <Box bg="$gray100" p="$3" borderRadius="$md" borderWidth={1} borderColor="$gray200" w="$full">
+                  <Text size="xs" color="$textLight600" numberOfLines={2}>
+                    {pixData.text}
+                  </Text>
+                </Box>
+              )}
+              {pixData?.text && (
+                <AppButton 
+                  variant="outline"
+                  label="Copiar Código PIX" 
+                  onPress={() => {
+                    Clipboard.setString(pixData.text);
+                    Alert.alert('Copiado!', 'Código PIX copiado para a área de transferência.');
+                  }}
+                />
+              )}
+            </VStack>
+
+            <Text textAlign="center" size="sm" color="$textLight600" mt="$4">
+              Após o pagamento, clique no botão abaixo para liberar o acesso:
             </Text>
             <AppButton 
               label={loading ? 'Verificando...' : 'Já realizei o pagamento'} 
