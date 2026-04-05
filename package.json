@@ -7,7 +7,11 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+<<<<<<< HEAD
     "build:web": "npx expo export --platform web"
+=======
+    "build:web": "expo export --platform web"
+>>>>>>> 9e024a1ec3f083fe357ec250e3528a9b33e9d1e6
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
