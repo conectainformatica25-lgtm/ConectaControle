@@ -4,7 +4,9 @@ import { clearStoredToken, getStoredToken } from '@/services/api/tokenStorage';
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
-  const url = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const base = API_BASE_URL.endsWith('/api') ? API_BASE_URL : `${API_BASE_URL}/api`;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${base.replace(/\/$/, '')}${cleanPath}`;
   const token = await getStoredToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
