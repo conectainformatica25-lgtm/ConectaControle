@@ -21,6 +21,7 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.get('/', (_req, res) => res.send('ConectaControle API is running! Check /health for status.'));
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.use('/api', authRouter);
