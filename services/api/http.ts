@@ -29,10 +29,10 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     try {
       json = text ? JSON.parse(text) : {};
     } catch (parseErr) {
-      console.error('[API] Resposta não é um JSON válido:', text.substring(0, 100));
+      console.error(`[API] Erro ao processar JSON de ${method} ${url}. Resposta:`, text.substring(0, 200));
       if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
         throw new Error(
-          'O servidor retornou uma página HTML em vez de JSON. Isso geralmente significa que a URL da API está errada (apontando para o frontend).'
+          `O servidor em ${url} retornou uma página HTML em vez de JSON. Verifique se a URL da API está correta.`
         );
       }
       throw new Error('Erro ao processar resposta do servidor (JSON inválido).');
@@ -45,10 +45,10 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
 
     return json as T;
   } catch (err: any) {
+    console.error(`[API] Erro na requisição ${method} ${url}:`, err.message);
     if (err instanceof TypeError && err.message.includes('fetch')) {
-      console.error(`[API] Erro de rede ao acessar: ${url}`, err);
       throw new Error(
-        'Não foi possível conectar ao servidor. Verifique sua conexão e se o endereço da API está correto.'
+        `Não foi possível conectar a ${url}. Verifique sua conexão e se o endereço da API está correto.`
       );
     }
     throw err;
