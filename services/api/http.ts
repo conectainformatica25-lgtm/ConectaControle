@@ -45,7 +45,11 @@ async function request<T>(method: Method, path: string, body?: unknown): Promise
     }
 
     if (!res.ok) {
-      const msg = (json as { error?: string }).error ?? res.statusText;
+      const parsedJson = json as { error?: string; message?: string };
+      // Se for internal_error e tiver mensagem, mostra a mensagem real
+      const msg = parsedJson.error === 'internal_error' && parsedJson.message 
+        ? parsedJson.message 
+        : (parsedJson.message || parsedJson.error || res.statusText);
       throw new Error(msg);
     }
 
