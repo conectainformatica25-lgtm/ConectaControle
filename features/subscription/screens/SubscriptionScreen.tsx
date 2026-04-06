@@ -12,6 +12,7 @@ export function SubscriptionScreen() {
   const company = useAuthStore((s: any) => s.company);
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ text: string; imageUrl?: string; orderId?: string } | null>(null);
 
   if (!company) return null;
@@ -25,6 +26,7 @@ export function SubscriptionScreen() {
   async function handlePay() {
     if (!company) return;
     setLoading(true);
+    setErrorMessage(null);
     try {
       // Chamada agora é feita para o NOSSO Backend
       const data: any = await apiPost('/payments/pix', {
@@ -54,11 +56,11 @@ export function SubscriptionScreen() {
         setShowQR(true);
       } else {
         console.error('PagBank Erro:', data);
-        Alert.alert('Erro', 'Não foi possível gerar a cobrança. Tente novamente mais tarde.');
+        setErrorMessage('Não foi possível gerar a cobrança. Tente novamente mais tarde.');
       }
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Erro', error.message || 'Erro de conexão.');
+      setErrorMessage(error.message || 'Erro de conexão.');
     } finally {
       setLoading(false);
     }
@@ -155,6 +157,11 @@ export function SubscriptionScreen() {
               onPress={handlePay}
               disabled={loading}
             />
+            {errorMessage && (
+              <Box bg="$red100" p="$3" borderRadius="$md" borderWidth={1} borderColor="$red200">
+                <Text color="$red700" size="sm" textAlign="center">{errorMessage}</Text>
+              </Box>
+            )}
           </VStack>
         ) : (
           <VStack space="xl" alignItems="center" bg="$white" p="$6" borderRadius="$xl" borderWidth={1} borderColor="$primary200">

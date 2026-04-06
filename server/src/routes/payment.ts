@@ -33,7 +33,7 @@ paymentRouter.post('/payments/pix', requireAuth, async (req, res, next) => {
         customer: customer || {
           name: 'Cliente ConectaControle',
           email: 'contato@conectacontrole.com.br',
-          tax_id: '00000000000'
+          tax_id: '00000000000191' // Dummy CNPJ válido matematicamente para PagBank aceitar
         },
         items: items || [
           {
@@ -58,7 +58,11 @@ paymentRouter.post('/payments/pix', requireAuth, async (req, res, next) => {
       res.json(data);
     } else {
       console.error('PagBank Error:', data);
-      res.status(response.status).json(data);
+      let errorMsg = 'Não foi possível gerar a cobrança.';
+      if (data.error_messages && data.error_messages.length > 0) {
+        errorMsg = data.error_messages[0].description;
+      }
+      res.status(400).json({ error: errorMsg, details: data });
     }
   } catch (error) {
     next(error);
