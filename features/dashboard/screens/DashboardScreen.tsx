@@ -1,3 +1,4 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Box, Heading, HStack, Text, VStack } from '@gluestack-ui/themed';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -74,21 +75,41 @@ export function DashboardScreen() {
               </HStack>
             </Box>
           )}
+
+          {/* COLORFUL DASHBOARD CARDS */}
           <HStack space="md" flexWrap="wrap">
-            <AlertCard
-              title="Vence hoje"
+            <DashboardCard
+              title="Vendas Hoje"
+              value="0,00"
+              bgColor="#17A2B8"
+              iconName="shopping-cart"
+            />
+            <DashboardCard
+              title="Vendas (Período)"
+              value="68,00"
+              bgColor="#F39C12"
+              iconName="bar-chart"
+              footerText="Ticket Médio $22.67 - Ref. 3 Venda(s)"
+            />
+            <DashboardCard
+              title="Receber Hoje"
               value={String(dueToday)}
-              tone="warning"
+              bgColor="#28A745"
+              iconName="thumbs-up"
+              footerText="Calendário"
               onPress={() => router.push('/(app)/(tabs)/debts')}
             />
-            <AlertCard
-              title="Vencidas"
+            <DashboardCard
+              title="Pagar Hoje"
               value={String(overdue)}
-              tone="danger"
+              bgColor="#DC3545"
+              iconName="thumbs-down"
+              footerText="Calendário"
               onPress={() => router.push('/(app)/(tabs)/debts')}
             />
           </HStack>
-          <HStack space="sm">
+
+          <HStack space="sm" mt="$4">
             <AppButton label="Abrir PDV" onPress={() => router.push('/(app)/(tabs)/pdv')} />
             <AppButton
               variant="outline"
@@ -107,44 +128,65 @@ export function DashboardScreen() {
   );
 }
 
-function AlertCard({
+function DashboardCard({
   title,
   value,
-  tone,
+  bgColor,
+  iconName,
+  footerText,
   onPress,
 }: {
   title: string;
   value: string;
-  tone: 'warning' | 'danger';
-  onPress: () => void;
+  bgColor: string;
+  iconName: React.ComponentProps<typeof FontAwesome>['name'];
+  footerText?: string;
+  onPress?: () => void;
 }) {
-  const accent = tone === 'danger' ? '$red500' : '$orange500';
   return (
     <Box
-      bg="$white"
-      borderWidth={1}
-      borderColor="$borderLight50"
-      borderRadius="$xl"
-      p="$4"
+      bg={bgColor}
+      borderRadius="$md"
       minWidth="45%"
       flexGrow={1}
       shadowColor="#000"
       shadowOffset={{ width: 0, height: 2 }}
-      shadowOpacity={0.05}
-      shadowRadius={4}
+      shadowOpacity={0.1}
+      shadowRadius={2}
+      mb="$2"
+      onTouchEnd={onPress}
+      overflow="hidden"
     >
-      <HStack justifyContent="space-between" alignItems="center">
-        <Text fontWeight="$bold" size="xs" color="$textLight500" textTransform="uppercase">
-          {title}
-        </Text>
-        <Box bg={accent} w={8} h={8} borderRadius={4} />
+      <HStack justifyContent="space-between" alignItems="flex-start" p="$4">
+        <VStack>
+          <Text fontSize="$4xl" fontWeight="$bold" color="$white" lineHeight="$4xl">
+            {value}
+          </Text>
+          <Text fontSize="$sm" color="$white">
+            {title}
+          </Text>
+        </VStack>
+        <FontAwesome name={iconName} size={48} color="rgba(255,255,255,0.2)" />
       </HStack>
-      <Text fontSize="$3xl" fontWeight="$bold" my="$2" color="$textLight900">
-        {value}
-      </Text>
-      <Text color="$primary500" fontSize="$sm" fontWeight="$600" onPress={onPress}>
-        Ver detalhes
-      </Text>
+      {footerText && (
+        <Box 
+          borderTopWidth={1} 
+          borderColor="rgba(255,255,255,0.1)" 
+          bg="rgba(0,0,0,0.05)"
+          py="$2" 
+          px="$4"
+          alignItems="center"
+          flexDirection="row"
+          justifyContent="center"
+        >
+          <Text color="$white" fontSize="$xs" mr="$1">
+            {footerText}
+          </Text>
+          {(footerText === 'Calendário') && (
+             <FontAwesome name="arrow-circle-right" size={14} color="white" />
+          )}
+        </Box>
+      )}
     </Box>
   );
 }
