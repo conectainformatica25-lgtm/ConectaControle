@@ -1,18 +1,18 @@
 import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
-import { updateCompany } from '@/services/mock/memoryStore';
 import { Box, Heading, HStack, Text, VStack, Divider, Image } from '@gluestack-ui/themed';
 import { useState } from 'react';
 import { Alert, Clipboard } from 'react-native';
+import { apiPost, apiGet } from '@/services/api/http';
 
-const PAGBANK_TOKEN = 'd9e40d72-9844-4c13-86bc-3d4d16b115127b613b124ac6afb11173b75ab00cd242e6df-f9cf-4274-bf84-60075664f1a7';
+// O PAGBANK_TOKEN agora é mantido apenas no Backend por segurança.
 
 export function SubscriptionScreen() {
-  const company = useAuthStore((s) => s.company);
+  const company = useAuthStore((s: any) => s.company);
   const [loading, setLoading] = useState(false);
   const [showQR, setShowQR] = useState(false);
-  const [pixData, setPixData] = useState<{ text: string; imageUrl?: string } | null>(null);
+  const [pixData, setPixData] = useState<{ text: string; imageUrl?: string; orderId?: string } | null>(null);
 
   if (!company) return null;
 
@@ -26,92 +26,83 @@ export function SubscriptionScreen() {
     if (!company) return;
     setLoading(true);
     try {
-      const response = await fetch('https://api.pagseguro.com/orders', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${PAGBANK_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Accept': '*/*'
+      // Chamada agora é feita para o NOSSO Backend
+      const data: any = await apiPost('/payments/pix', {
+        customer: {
+          name: company.name || 'Cliente ConectaControle',
+          email: 'contato@conectacontrole.com.br',
+          tax_id: '00000000000'
         },
-        body: JSON.stringify({
-          reference_id: `sub_${company.id}_${Date.now()}`,
-          customer: {
-            name: company.name || 'Cliente ConectaControle',
-            email: 'contato@conectacontrole.com.br',
-            tax_id: '00000000000',
-            phones: [
-              {
-                country: "55",
-                area: "11",
-                number: "999999999",
-                type: "MOBILE"
-              }
-            ]
-          },
-          items: [
-            {
-              reference_id: "plan_mensal",
-              name: "Assinatura Mensal ConectaControle",
-              quantity: 1,
-              unit_amount: 3999
-            }
-          ],
-          qr_codes: [
-            {
-              amount: {
-                value: 3999
-              }
-            }
-          ]
-        })
+        items: [
+          {
+            reference_id: "plan_mensal",
+            name: "Assinatura Mensal ConectaControle",
+            quantity: 1,
+            unit_amount: 3999
+          }
+        ]
       });
 
-      const data = await response.json();
-      
-      if (response.ok && data.qr_codes && data.qr_codes.length > 0) {
+      if (data.qr_codes && data.qr_codes.length > 0) {
         const qrCode = data.qr_codes[0];
         const imageUrl = qrCode.links?.find((l: any) => l.rel === 'QRCODE.PNG')?.href;
-        setPixData({ text: qrCode.text, imageUrl });
+        setPixData({ 
+          text: qrCode.text, 
+          imageUrl,
+          orderId: data.id // Guardamos o ID do pedido para consulta posterior
+        });
         setShowQR(true);
       } else {
         console.error('PagBank Erro:', data);
         Alert.alert('Erro', 'Não foi possível gerar a cobrança. Tente novamente mais tarde.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Alert.alert('Erro', 'Erro de conexão.');
+      Alert.alert('Erro', error.message || 'Erro de conexão.');
     } finally {
       setLoading(false);
     }
   }
 
   async function confirmPayment() {
-    if (!company) return;
+    if (!company || !pixData?.orderId) return;
     setLoading(true);
-    // Simulating Webhook/Confirmation
-    setTimeout(() => {
-      const newExpiry = new Date();
-      newExpiry.setDate(newExpiry.getDate() + 30);
+    
+    try {
+      // Verifica o status REAL no PagBank via nosso Backend
+      const result: any = await apiGet(`/payments/pix/status/${pixData.orderId}`);
       
-      const updatedCompany = {
-        ...company,
-        status: 'active' as const,
-        expires_at: newExpiry.toISOString()
-      };
+      if (result.status === 'PAID') {
+        // O Backend já cuidou de atualizar o banco de dados.
+        // Vamos apenas recarregar os dados da empresa/perfil.
+        // Para fins de UX imediata, podemos simular a atualização no estado local também.
+        
+        const newExpiry = new Date();
+        newExpiry.setDate(newExpiry.getDate() + 30);
+        
+        const updatedCompany = {
+          ...company,
+          status: 'active' as const,
+          expires_at: newExpiry.toISOString()
+        };
 
-      // Update local store/mock
-      updateCompany(company.id, updatedCompany);
-      
-      // Update global state
-      useAuthStore.getState().setSession({
-        profile: useAuthStore.getState().profile,
-        company: updatedCompany
-      });
+        // Atualiza estado global
+        useAuthStore.getState().setSession({
+          profile: useAuthStore.getState().profile,
+          company: updatedCompany
+        });
 
+        setShowQR(false);
+        Alert.alert('Sucesso', 'Seu pagamento foi confirmado! Assinatura ativa por mais 30 dias.');
+      } else {
+        Alert.alert('Aguardando', 'Ainda não recebemos a confirmação do pagamento. Tente novamente em instantes.');
+      }
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Erro', 'Não foi possível verificar o pagamento. Tente novamente.');
+    } finally {
       setLoading(false);
-      setShowQR(false);
-      Alert.alert('Sucesso', 'Seu pagamento foi confirmado! Assinatura ativa por mais 30 dias.');
-    }, 2000);
+    }
   }
 
   return (

@@ -10,6 +10,7 @@ import { salesRouter } from './routes/sales.js';
 import { debtsRouter } from './routes/debts.js';
 import { companyRouter } from './routes/company.js';
 import { reportsRouter } from './routes/reports.js';
+import { paymentRouter } from './routes/payment.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
@@ -55,6 +56,7 @@ app.use('/api', salesRouter);
 app.use('/api', debtsRouter);
 app.use('/api', companyRouter);
 app.use('/api', reportsRouter);
+app.use('/api', paymentRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[Unhandled Error]', err);
