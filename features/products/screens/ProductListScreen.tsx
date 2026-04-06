@@ -60,32 +60,42 @@ export function ProductListScreen() {
             />
           }
           renderItem={({ item }) => (
-            <Box bg="$white" borderWidth={1} borderColor="$borderLight50" borderRadius="$xl" p="$4" mb="$3">
-              <Text fontWeight="$bold">{item.name}</Text>
-              <Text size="sm" color="$textLight500">
-                {item.category}
-              </Text>
-              {item.variants.map((v) => {
-                const low = v.quantity <= threshold;
-                const label = [v.size_label, v.color_label].filter(Boolean).join(' · ') || 'Único';
-                const price = v.sale_price ?? item.sale_price;
-                return (
-                  <HStack key={v.id} justifyContent="space-between" alignItems="center" mt="$2">
-                    <Text size="sm">{label}</Text>
-                    <HStack space="sm" alignItems="center">
-                      {low ? (
-                        <Text size="xs" color="$red500">
-                          Baixo
+            <Box bg="$white" borderWidth={0} shadowColor="#000" shadowOffset={{ width: 0, height: 2 }} shadowOpacity={0.05} shadowRadius={4} borderRadius="$xl" p="$5" mb="$3">
+              <HStack justifyContent="space-between" alignItems="flex-start">
+                <VStack>
+                  <Text fontWeight="$bold" color="$textLight900">{item.name}</Text>
+                  <Text size="xs" color="$textLight500">{item.category}</Text>
+                </VStack>
+                {item.code ? (
+                  <Box bg="$backgroundLight100" px="$2" py="$1" borderRadius="$md">
+                    <Text size="xs" color="$textLight600">Cód: {item.code}</Text>
+                  </Box>
+                ) : null}
+              </HStack>
+              
+              <Box mt="$3" pt="$3" borderTopWidth={1} borderColor="$borderLight50">
+                {item.variants.map((v) => {
+                  const low = v.quantity <= threshold;
+                  const label = [v.size_label, v.color_label].filter(Boolean).join(' · ') || 'Único';
+                  const price = v.sale_price ?? item.sale_price;
+                  return (
+                    <HStack key={v.id} justifyContent="space-between" alignItems="center" mt="$2">
+                      <Text size="sm" color="$textLight700">{label}</Text>
+                      <HStack space="sm" alignItems="center">
+                        {low ? (
+                          <Box bg="$red50" px="$1.5" py="$0.5" borderRadius="$sm">
+                            <Text size="xs" color="$red600" fontWeight="$bold">Baixo</Text>
+                          </Box>
+                        ) : null}
+                        <Text size="sm" fontWeight="$bold" color="$primary600">{formatBRL(price)}</Text>
+                        <Text size="sm" fontWeight="$bold" color="$textLight900">
+                          x{v.quantity}
                         </Text>
-                      ) : null}
-                      <Text size="sm">{formatBRL(price)}</Text>
-                      <Text size="sm" fontWeight="$bold">
-                        x{v.quantity}
-                      </Text>
+                      </HStack>
                     </HStack>
-                  </HStack>
-                );
-              })}
+                  );
+                })}
+              </Box>
             </Box>
           )}
         />

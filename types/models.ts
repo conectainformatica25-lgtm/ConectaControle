@@ -29,6 +29,7 @@ export type Product = {
   id: string;
   company_id: string;
   name: string;
+  code: string | null;
   category: string;
   purchase_price: number;
   sale_price: number;

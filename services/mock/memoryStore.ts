@@ -38,6 +38,7 @@ export function seedIfEmpty() {
     id: pid,
     company_id: cid,
     name: 'Camiseta básica',
+    code: '123456',
     category: 'Roupas',
     purchase_price: 25,
     sale_price: 59.9,
@@ -119,6 +120,7 @@ export function createProductForCompany(
   cid: string,
   input: {
     name: string;
+    code: string | null;
     category: string;
     purchase_price: number;
     sale_price: number;
@@ -130,6 +132,7 @@ export function createProductForCompany(
     id: pid,
     company_id: cid,
     name: input.name,
+    code: input.code,
     category: input.category,
     purchase_price: input.purchase_price,
     sale_price: input.sale_price,

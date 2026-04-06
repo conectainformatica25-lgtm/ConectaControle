@@ -64,12 +64,15 @@ export function DebtsScreen() {
             <Pressable key={k} onPress={() => setFilter(k)}>
               <Box
                 borderWidth={2}
-                px="$3"
+                px="$4"
                 py="$2"
-                borderRadius="$md"
-                borderColor={filter === k ? '$primary500' : '$borderLight200'}
+                borderRadius="$full"
+                borderColor={filter === k ? '$primary500' : 'transparent'}
+                bg={filter === k ? '$primary50' : '$backgroundLight50'}
               >
-                <Text size="sm">{label}</Text>
+                <Text size="sm" fontWeight={filter === k ? '$bold' : '$normal'} color={filter === k ? '$primary700' : '$textLight600'}>
+                  {label}
+                </Text>
               </Box>
             </Pressable>
           ))}
@@ -78,20 +81,40 @@ export function DebtsScreen() {
           data={filtered}
           keyExtractor={(i) => i.id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-          renderItem={({ item }) => (
-            <Box borderWidth={1} borderColor="$borderLight200" p="$3" mb="$2" borderRadius="$md">
-              <Text fontWeight="$bold">{item.customer_name ?? 'Cliente'}</Text>
-              <Text size="sm">
-                #{item.installment_number} · venc. {item.due_date} · {formatBRL(item.amount)}
-              </Text>
-              <Text size="sm" color="$textLight500">
-                {item.status}
-              </Text>
-              {item.status !== 'paid' ? (
-                <AppButton label="Marcar como paga" onPress={() => markPaid(item.id)} />
-              ) : null}
-            </Box>
-          )}
+          renderItem={({ item }) => {
+            const isOverdue = item.status !== 'paid' && item.due_date < t;
+            const isPaid = item.status === 'paid';
+            return (
+              <Box bg="$white" borderWidth={0} p="$4" mb="$3" borderRadius="$xl" shadowColor="#000" shadowOffset={{ width: 0, height: 2 }} shadowOpacity={0.05} shadowRadius={4}>
+                <HStack justifyContent="space-between" alignItems="flex-start" mb="$1">
+                  <VStack>
+                    <Text fontWeight="$bold" color="$textLight900">{item.customer_name ?? 'Cliente'}</Text>
+                    <Text size="sm" color="$textLight500">
+                      Vencimento: {item.due_date}
+                    </Text>
+                  </VStack>
+                  <Box bg={isPaid ? '$green50' : isOverdue ? '$red50' : '$orange50'} px="$2" py="$1" borderRadius="$md">
+                    <Text size="xs" fontWeight="$bold" color={isPaid ? '$green700' : isOverdue ? '$red700' : '$orange700'}>
+                      {isPaid ? 'PAGA' : isOverdue ? 'ATRASADA' : 'PENDENTE'}
+                    </Text>
+                  </Box>
+                </HStack>
+                <HStack justifyContent="space-between" alignItems="center" mt="$2">
+                  <Text size="md" fontWeight="$bold" color="$primary600">
+                    {formatBRL(item.amount)}
+                  </Text>
+                  <Text size="xs" color="$textLight400">
+                    Parcela #{item.installment_number}
+                  </Text>
+                </HStack>
+                {item.status !== 'paid' ? (
+                  <Box mt="$3" pt="$3" borderTopWidth={1} borderColor="$borderLight50">
+                    <AppButton label="Marcar como Pago" onPress={() => markPaid(item.id)} />
+                  </Box>
+                ) : null}
+              </Box>
+            );
+          }}
         />
       </VStack>
     </Screen>

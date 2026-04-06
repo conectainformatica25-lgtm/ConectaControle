@@ -45,24 +45,27 @@ export function CustomerListScreen() {
         <Heading size="lg" mb="$3">
           Clientes
         </Heading>
-        <VStack space="sm" mb="$4">
-          <Input>
+        <VStack space="sm" mb="$4" bg="$white" p="$4" borderRadius="$xl" shadowColor="#000" shadowOffset={{ width: 0, height: 2 }} shadowOpacity={0.05} shadowRadius={4}>
+          <Text fontWeight="$bold" mb="$1">Adicionar novo cliente</Text>
+          <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
             <InputField placeholder="Nome" value={name} onChangeText={setName} />
           </Input>
-          <Input>
+          <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
             <InputField placeholder="Telefone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           </Input>
-          <AppButton label="Adicionar cliente" onPress={add} />
+          <Box pt="$2">
+            <AppButton label="Salvar Cliente" onPress={add} />
+          </Box>
         </VStack>
         <FlatList
           data={list}
           keyExtractor={(c) => c.id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-          ListEmptyComponent={<EmptyState title="Nenhum cliente" />}
+          ListEmptyComponent={<EmptyState title="Nenhum cliente cadastrado" />}
           renderItem={({ item }) => (
-            <Box borderWidth={1} borderColor="$borderLight200" p="$3" borderRadius="$md" mb="$2">
-              <Text fontWeight="$bold">{item.name}</Text>
-              <Text size="sm" color="$textLight500">
+            <Box bg="$white" borderWidth={0} p="$4" borderRadius="$lg" mb="$2" shadowColor="#000" shadowOffset={{ width: 0, height: 1 }} shadowOpacity={0.05} shadowRadius={2}>
+              <Text fontWeight="$bold" color="$textLight900">{item.name}</Text>
+              <Text size="sm" color="$textLight500" mt="$1">
                 {item.phone}
               </Text>
             </Box>

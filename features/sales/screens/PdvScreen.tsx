@@ -1,6 +1,7 @@
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Box, Heading, HStack, Input, InputField, ScrollView, Text, VStack } from '@gluestack-ui/themed';
-import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, Platform } from 'react-native';
 
 import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
@@ -34,6 +35,8 @@ export function PdvScreen() {
   const [parcelas, setParcelas] = useState('3');
   const [firstDue, setFirstDue] = useState(() => new Date().toISOString().slice(0, 10));
   const [msg, setMsg] = useState<string | null>(null);
+  
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([
@@ -47,6 +50,24 @@ export function PdvScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const filteredItems = useMemo(() => {
+    if (query.trim().length < 2) return [];
+    const q = query.toLowerCase();
+    
+    const matchedProducts = catalog.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      (p.code && p.code.toLowerCase().includes(q))
+    );
+
+    return matchedProducts.flatMap((p) =>
+      p.variants.map((v) => ({
+        key: v.id,
+        product: p,
+        variant: v,
+      }))
+    );
+  }, [catalog, query]);
 
   const total = lines.reduce((s, l) => s + l.qty * l.unitSalePrice, 0);
 
@@ -100,126 +121,181 @@ export function PdvScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        <Heading size="lg" mb="$3">
-          PDV
-        </Heading>
-        <Text fontWeight="$bold" mb="$2">
-          Catálogo
-        </Text>
-        <FlatList
-          scrollEnabled={false}
-          data={catalog.flatMap((p) =>
-            p.variants.map((v) => ({
-              key: v.id,
-              product: p,
-              variant: v,
-            }))
+        <VStack space="md" py="$4">
+          
+          <Box bg="$primary500" borderRadius="$xl" p="$5" mb="$2" shadowColor="#000" shadowOffset={{width:0, height:2}} shadowOpacity={0.1} shadowRadius={4}>
+            <Heading color="$white" size="lg" mb="$3">Busca Rápida de Produto</Heading>
+            <Input bg="$white" borderRadius="$md" size="lg" borderColor="$transparent">
+              <InputField 
+                placeholder="Pesquise por Nome ou Código (ex: 789...)" 
+                value={query} 
+                onChangeText={setQuery} 
+              />
+            </Input>
+          </Box>
+
+          {query.trim().length >= 2 && (
+             <Box mb="$2">
+                <Text fontWeight="$bold" mb="$2">Resultados ({filteredItems.length})</Text>
+                {filteredItems.length === 0 ? (
+                  <Text color="$textLight500">Nenhum produto encontrado.</Text>
+                ) : (
+                  <FlatList
+                    scrollEnabled={false}
+                    data={filteredItems}
+                    keyExtractor={(x) => x.key}
+                    renderItem={({ item }) => {
+                      const price = item.variant.sale_price ?? item.product.sale_price;
+                      const label = [item.variant.size_label, item.variant.color_label].filter(Boolean).join(' · ') || 'Único';
+                      return (
+                        <Pressable
+                          onPress={() => {
+                            if (item.variant.quantity < 1) return;
+                            addLine({
+                              variantId: item.variant.id,
+                              productName: item.product.name,
+                              label,
+                              qty: 1,
+                              unitSalePrice: price,
+                              unitPurchasePrice: item.product.purchase_price,
+                            });
+                            setQuery('');
+                          }}
+                        >
+                          <Box bg="$white" borderWidth={0} p="$4" mb="$2" borderRadius="$lg" shadowColor="#000" shadowOffset={{width:0, height:1}} shadowOpacity={0.05} shadowRadius={2}>
+                            <HStack justifyContent="space-between" alignItems="center">
+                              <VStack flex={1}>
+                                <Text fontWeight="$bold" color="$textLight900">
+                                  {item.product.name}
+                                </Text>
+                                <Text size="xs" color="$textLight500">
+                                  Opção: {label} {item.product.code ? `| Cód: ${item.product.code}` : ''}
+                                </Text>
+                              </VStack>
+                              <VStack alignItems="flex-end">
+                                <Text fontWeight="$bold" color="$primary500">{formatBRL(price)}</Text>
+                                <Text size="xs" color={item.variant.quantity > 0 ? '$green600' : '$red500'}>
+                                  Estoque: {item.variant.quantity}
+                                </Text>
+                              </VStack>
+                            </HStack>
+                          </Box>
+                        </Pressable>
+                      );
+                    }}
+                  />
+                )}
+             </Box>
           )}
-          keyExtractor={(x) => x.key}
-          renderItem={({ item }) => {
-            const price = item.variant.sale_price ?? item.product.sale_price;
-            const label = [item.variant.size_label, item.variant.color_label].filter(Boolean).join(' · ') || 'Único';
-            return (
-              <Pressable
-                onPress={() => {
-                  if (item.variant.quantity < 1) return;
-                  addLine({
-                    variantId: item.variant.id,
-                    productName: item.product.name,
-                    label,
-                    qty: 1,
-                    unitSalePrice: price,
-                    unitPurchasePrice: item.product.purchase_price,
-                  });
-                }}
-              >
-                <Box bg="$white" borderWidth={1} borderColor="$borderLight50" p="$3" mb="$2" borderRadius="$xl">
-                  <HStack justifyContent="space-between">
-                    <Text size="sm" flex={1}>
-                      {item.product.name} — {label}
-                    </Text>
-                    <Text size="sm">{formatBRL(price)}</Text>
-                  </HStack>
-                  <Text size="xs" color="$textLight500">
-                    Estoque: {item.variant.quantity}
-                  </Text>
-                </Box>
-              </Pressable>
-            );
-          }}
-        />
-        <Heading size="md" mt="$4">
-          Carrinho
-        </Heading>
-        {lines.map((l) => (
-          <HStack key={l.variantId} justifyContent="space-between" alignItems="center" my="$1">
-            <Text flex={1} size="sm">
-              {l.productName} ({l.label})
-            </Text>
-            <HStack space="md" alignItems="center">
-              <Pressable onPress={() => setQty(l.variantId, l.qty - 1)}>
-                <Text>-</Text>
-              </Pressable>
-              <Text>{l.qty}</Text>
-              <Pressable onPress={() => setQty(l.variantId, l.qty + 1)}>
-                <Text>+</Text>
-              </Pressable>
-            </HStack>
-          </HStack>
-        ))}
-        <Text fontSize="$xl" fontWeight="$bold" my="$3">
-          Total {formatBRL(total)}
-        </Text>
-        <Text fontWeight="$bold" mb="$2">
-          Pagamento
-        </Text>
-        <HStack flexWrap="wrap" space="sm" mb="$4">
-          {methods.map((m) => (
-            <Pressable key={m.id} onPress={() => setPaymentMethod(m.id)}>
-              <Box
-                borderWidth={2}
-                borderColor={paymentMethod === m.id ? '$primary500' : '$borderLight200'}
-                px="$3"
-                py="$2"
-                borderRadius="$md"
-              >
-                <Text size="sm">{m.label}</Text>
+
+          <Box bg="$white" borderRadius="$xl" p="$5" shadowColor="#000" shadowOffset={{width:0, height:2}} shadowOpacity={0.05} shadowRadius={4}>
+            <Heading size="md" mb="$3">
+              Resumo do Carrinho
+            </Heading>
+            
+            {lines.length === 0 ? (
+              <Box py="$6" alignItems="center" bg="$backgroundLight50" borderRadius="$md">
+                <FontAwesome name="shopping-cart" size={32} color="#D1D5DB" />
+                <Text mt="$2" color="$textLight400">O carrinho está vazio</Text>
               </Box>
-            </Pressable>
-          ))}
-        </HStack>
-        {paymentMethod === 'credit' ? (
-          <VStack space="md" mb="$4">
-            <Text fontWeight="$bold">Cliente</Text>
-            <HStack flexWrap="wrap" space="sm">
-              {customers.map((c) => (
-                <Pressable key={c.id} onPress={() => setCustomerId(c.id)}>
+            ) : (
+              <VStack space="sm">
+                {lines.map((l) => (
+                  <HStack key={l.variantId} justifyContent="space-between" alignItems="center" bg="$backgroundLight50" p="$3" borderRadius="$md">
+                    <VStack flex={1}>
+                      <Text size="sm" fontWeight="$bold">{l.productName}</Text>
+                      <Text size="xs" color="$textLight500">{l.label}</Text>
+                    </VStack>
+                    <HStack space="md" alignItems="center" bg="$white" borderRadius="$full" px="$3" py="$1" borderWidth={1} borderColor="$borderLight200">
+                      <Pressable onPress={() => setQty(l.variantId, l.qty - 1)} hitSlop={10}>
+                        <FontAwesome name="minus" size={12} color="#6B7280" />
+                      </Pressable>
+                      <Text fontWeight="$bold" minWidth="$4" textAlign="center">{l.qty}</Text>
+                      <Pressable onPress={() => setQty(l.variantId, l.qty + 1)} hitSlop={10}>
+                        <FontAwesome name="plus" size={12} color="#6B7280" />
+                      </Pressable>
+                    </HStack>
+                  </HStack>
+                ))}
+              </VStack>
+            )}
+
+            <Box mt="$4" pt="$4" borderTopWidth={1} borderColor="$borderLight100">
+              <HStack justifyContent="space-between" alignItems="center">
+                <Text fontSize="$lg" color="$textLight500">Total a pagar</Text>
+                <Text fontSize="$2xl" fontWeight="$bold" color="$green600">
+                  {formatBRL(total)}
+                </Text>
+              </HStack>
+            </Box>
+          </Box>
+
+          <Box bg="$white" borderRadius="$xl" p="$5" shadowColor="#000" shadowOffset={{width:0, height:2}} shadowOpacity={0.05} shadowRadius={4}>
+            <Text fontWeight="$bold" mb="$3">
+              Forma de Pagamento
+            </Text>
+            <HStack flexWrap="wrap" space="sm" mb="$4">
+              {methods.map((m) => (
+                <Pressable key={m.id} onPress={() => setPaymentMethod(m.id)}>
                   <Box
                     borderWidth={2}
-                    borderColor={customerId === c.id ? '$primary500' : '$borderLight200'}
-                    px="$3"
-                    py="$2"
+                    borderColor={paymentMethod === m.id ? '$primary500' : 'transparent'}
+                    bg={paymentMethod === m.id ? '$primary50' : '$backgroundLight100'}
+                    px="$4"
+                    py="$2.5"
                     borderRadius="$md"
                   >
-                    <Text size="sm">{c.name}</Text>
+                    <Text size="sm" fontWeight={paymentMethod === m.id ? '$bold' : '$normal'} color={paymentMethod === m.id ? '$primary700' : '$textLight600'}>{m.label}</Text>
                   </Box>
                 </Pressable>
               ))}
             </HStack>
-            <Input>
-              <InputField placeholder="Entrada (R$)" value={down} onChangeText={setDown} keyboardType="decimal-pad" />
-            </Input>
-            <Input>
-              <InputField placeholder="Parcelas" value={parcelas} onChangeText={setParcelas} keyboardType="number-pad" />
-            </Input>
-            <Input>
-              <InputField placeholder="Primeiro vencimento AAAA-MM-DD" value={firstDue} onChangeText={setFirstDue} />
-            </Input>
+
+            {paymentMethod === 'credit' && (
+              <VStack space="md">
+                <Text fontWeight="$bold">Selecionar Cliente</Text>
+                <HStack flexWrap="wrap" space="sm">
+                  {customers.map((c) => (
+                    <Pressable key={c.id} onPress={() => setCustomerId(c.id)}>
+                      <Box
+                        borderWidth={2}
+                        borderColor={customerId === c.id ? '$primary500' : 'transparent'}
+                        bg={customerId === c.id ? '$primary50' : '$backgroundLight100'}
+                        px="$4"
+                        py="$2"
+                        borderRadius="$md"
+                        mb="$2"
+                      >
+                        <Text size="sm" fontWeight={customerId === c.id ? '$bold' : '$normal'} color={customerId === c.id ? '$primary700' : '$textLight600'}>{c.name}</Text>
+                      </Box>
+                    </Pressable>
+                  ))}
+                </HStack>
+                <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
+                  <InputField placeholder="Entrada Inicial (R$)" value={down} onChangeText={setDown} keyboardType="decimal-pad" />
+                </Input>
+                <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
+                  <InputField placeholder="Qtd. de Parcelas" value={parcelas} onChangeText={setParcelas} keyboardType="number-pad" />
+                </Input>
+                <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
+                  <InputField placeholder="Vencimento Inicial (AAAA-MM-DD)" value={firstDue} onChangeText={setFirstDue} />
+                </Input>
+              </VStack>
+            )}
+            
+            {msg && (
+              <Box bg="$green50" p="$3" borderRadius="$md" mt="$4" borderWidth={1} borderColor="$green200">
+                <Text color="$green700" textAlign="center">{msg}</Text>
+              </Box>
+            )}
+          </Box>
+
+          <VStack space="sm" mt="$2">
+            <AppButton label="Finalizar Venda" onPress={checkout} />
+            <AppButton variant="outline" label="Esvaziar Carrinho" onPress={clear} />
           </VStack>
-        ) : null}
-        {msg ? <Text color="$primary500">{msg}</Text> : null}
-        <AppButton label="Finalizar venda" onPress={checkout} />
-        <AppButton variant="outline" label="Limpar carrinho" onPress={clear} />
+
+        </VStack>
       </ScrollView>
     </Screen>
   );

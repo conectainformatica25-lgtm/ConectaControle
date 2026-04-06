@@ -18,6 +18,9 @@ async function migrate() {
       ADD COLUMN IF NOT EXISTS trial_ends_at timestamptz NOT NULL DEFAULT now() + interval '7 days',
       ADD COLUMN IF NOT EXISTS expires_at timestamptz,
       ADD COLUMN IF NOT EXISTS "PAGBANK_TOKEN" text;
+
+      ALTER TABLE products
+      ADD COLUMN IF NOT EXISTS code varchar(100);
     `);
     console.log('Migration completed successfully!');
   } catch (err) {

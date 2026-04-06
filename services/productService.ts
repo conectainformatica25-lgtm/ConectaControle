@@ -18,6 +18,7 @@ function mapProduct(row: Record<string, unknown>): Product {
     id: row.id as string,
     company_id: row.company_id as string,
     name: row.name as string,
+    code: (row.code as string) ?? null,
     category: row.category as string,
     purchase_price: Number(row.purchase_price),
     sale_price: Number(row.sale_price),
@@ -74,6 +75,7 @@ export async function listProductsWithVariants(): Promise<ProductWithVariants[]>
 
 export async function createProduct(input: {
   name: string;
+  code: string | null;
   category: string;
   purchase_price: number;
   sale_price: number;
@@ -101,6 +103,7 @@ export async function createProduct(input: {
     .insert({
       company_id: companyId,
       name: input.name,
+      code: input.code,
       category: input.category,
       purchase_price: input.purchase_price,
       sale_price: input.sale_price,
