@@ -1,12 +1,10 @@
 import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
-import { Box, Heading, HStack, Text, VStack, Divider, Image } from '@gluestack-ui/themed';
-import { useState } from 'react';
+import { Box, Heading, HStack, Text, VStack, Divider, Image, Spinner } from '@gluestack-ui/themed';
+import { useState, useEffect } from 'react';
 import { Alert, Clipboard } from 'react-native';
 import { apiPost, apiGet } from '@/services/api/http';
-
-// O PAGBANK_TOKEN agora é mantido apenas no Backend por segurança.
 
 export function SubscriptionScreen() {
   const company = useAuthStore((s: any) => s.company);
@@ -14,6 +12,31 @@ export function SubscriptionScreen() {
   const [showQR, setShowQR] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ text: string; imageUrl?: string; orderId?: string } | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (showQR && pixData?.orderId) {
+      interval = setInterval(async () => {
+        try {
+          const result: any = await apiGet(`/payments/pix/status/${pixData.orderId}`);
+          if (result.status === 'PAID') {
+            clearInterval(interval);
+            const newExpiry = new Date();
+            newExpiry.setDate(newExpiry.getDate() + 30);
+            const updatedCompany = { ...company, status: 'active' as const, expires_at: newExpiry.toISOString() };
+            useAuthStore.getState().setSession({ profile: useAuthStore.getState().profile, company: updatedCompany });
+            setShowQR(false);
+            Alert.alert('Sucesso', 'Seu pagamento foi confirmado! Assinatura ativa por mais 30 dias.');
+          }
+        } catch (e) {
+          // Ignora erros de rede momentâneos
+        }
+      }, 4000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [showQR, pixData, company]);
 
   if (!company) return null;
 
@@ -28,21 +51,13 @@ export function SubscriptionScreen() {
     setLoading(true);
     setErrorMessage(null);
     try {
-      // Chamada agora é feita para o NOSSO Backend
       const data: any = await apiPost('/payments/pix', {
         customer: {
           name: company.name || 'Cliente ConectaControle',
           email: 'contato@conectacontrole.com.br',
-          tax_id: '00000000000'
+          tax_id: '00000000000191'
         },
-        items: [
-          {
-            reference_id: "plan_mensal",
-            name: "Assinatura Mensal ConectaControle",
-            quantity: 1,
-            unit_amount: 3999
-          }
-        ]
+        items: [] // Opcional no novo backend Asaas, mas enviaremos vazio para manter hook
       });
 
       if (data.qr_codes && data.qr_codes.length > 0) {
@@ -51,57 +66,15 @@ export function SubscriptionScreen() {
         setPixData({ 
           text: qrCode.text, 
           imageUrl,
-          orderId: data.id // Guardamos o ID do pedido para consulta posterior
+          orderId: data.id
         });
         setShowQR(true);
       } else {
-        console.error('PagBank Erro:', data);
         setErrorMessage('Não foi possível gerar a cobrança. Tente novamente mais tarde.');
       }
     } catch (error: any) {
       console.error(error);
       setErrorMessage(error.message || 'Erro de conexão.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function confirmPayment() {
-    if (!company || !pixData?.orderId) return;
-    setLoading(true);
-    
-    try {
-      // Verifica o status REAL no PagBank via nosso Backend
-      const result: any = await apiGet(`/payments/pix/status/${pixData.orderId}`);
-      
-      if (result.status === 'PAID') {
-        // O Backend já cuidou de atualizar o banco de dados.
-        // Vamos apenas recarregar os dados da empresa/perfil.
-        // Para fins de UX imediata, podemos simular a atualização no estado local também.
-        
-        const newExpiry = new Date();
-        newExpiry.setDate(newExpiry.getDate() + 30);
-        
-        const updatedCompany = {
-          ...company,
-          status: 'active' as const,
-          expires_at: newExpiry.toISOString()
-        };
-
-        // Atualiza estado global
-        useAuthStore.getState().setSession({
-          profile: useAuthStore.getState().profile,
-          company: updatedCompany
-        });
-
-        setShowQR(false);
-        Alert.alert('Sucesso', 'Seu pagamento foi confirmado! Assinatura ativa por mais 30 dias.');
-      } else {
-        Alert.alert('Aguardando', 'Ainda não recebemos a confirmação do pagamento. Tente novamente em instantes.');
-      }
-    } catch (error: any) {
-      console.error(error);
-      Alert.alert('Erro', 'Não foi possível verificar o pagamento. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -201,23 +174,22 @@ export function SubscriptionScreen() {
               )}
             </VStack>
 
-            <Text textAlign="center" size="sm" color="$textLight600" mt="$4">
-              Após o pagamento, clique no botão abaixo para liberar o acesso:
-            </Text>
-            <AppButton 
-              label={loading ? 'Verificando...' : 'Já realizei o pagamento'} 
-              onPress={confirmPayment}
-              disabled={loading}
-            />
-            <Text size="xs" color="$primary500" onPress={() => setShowQR(false)}>
-              Voltar
+            <VStack alignItems="center" mt="$4" space="sm">
+              <Spinner color="$primary500" size="large" />
+              <Text textAlign="center" size="sm" color="$textLight600">
+                Aguardando a confirmação do pagamento...
+              </Text>
+            </VStack>
+
+            <Text mt="$2" size="xs" color="$red500" onPress={() => setShowQR(false)}>
+              Cancelar ou Voltar
             </Text>
           </VStack>
         )}
 
         <Box alignItems="center" mt="$4">
            <Text size="xs" color="$textLight400" textAlign="center">
-             Pagamento processado com segurança via PagSeguro.
+             Pagamento processado com segurança via Asaas.
            </Text>
         </Box>
       </VStack>
