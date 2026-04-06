@@ -8,13 +8,17 @@ import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import { isBackendConfigured } from '@/services/backend';
 import * as debtService from '@/services/debtService';
+import { listSalesInRange } from '@/services/salesService';
 import { useAuthStore } from '@/store/authStore';
-import { todayDateString } from '@/utils/dates';
+import { todayDateString, startOfDayIso, endOfDayIso, startOfMonthIso, endOfMonthIso } from '@/utils/dates';
 export function DashboardScreen() {
   const company = useAuthStore((s) => s.company);
   const profile = useAuthStore((s) => s.profile);
   const [dueToday, setDueToday] = useState(0);
   const [overdue, setOverdue] = useState(0);
+  const [salesToday, setSalesToday] = useState(0);
+  const [salesMonth, setSalesMonth] = useState(0);
+  const [salesMonthCount, setSalesMonthCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -32,6 +36,25 @@ export function DashboardScreen() {
       }
       setDueToday(d0);
       setOverdue(ov);
+
+      const now = new Date();
+      let slToday = 0;
+      let slMonth = 0;
+      let slMonthCt = 0;
+      try {
+        const todaySales = await listSalesInRange(startOfDayIso(now), endOfDayIso(now));
+        slToday = todaySales.reduce((acc, s) => acc + s.total, 0);
+
+        const monthSales = await listSalesInRange(startOfMonthIso(now), endOfMonthIso(now));
+        slMonth = monthSales.reduce((acc, s) => acc + s.total, 0);
+        slMonthCt = monthSales.length;
+      } catch (err) {
+        // Ignore mock/supabase errors if not set up
+      }
+      setSalesToday(slToday);
+      setSalesMonth(slMonth);
+      setSalesMonthCount(slMonthCt);
+
     } finally {
       setLoading(false);
     }
@@ -80,16 +103,17 @@ export function DashboardScreen() {
           <HStack space="md" flexWrap="wrap">
             <DashboardCard
               title="Vendas Hoje"
-              value="0,00"
+              value={salesToday.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               bgColor="#17A2B8"
               iconName="shopping-cart"
+              footerText="Atualizado agora"
             />
             <DashboardCard
               title="Vendas (Período)"
-              value="68,00"
+              value={salesMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               bgColor="#F39C12"
               iconName="bar-chart"
-              footerText="Ticket Médio $22.67 - Ref. 3 Venda(s)"
+              footerText={`Ticket Médio R$ ${salesMonthCount > 0 ? (salesMonth/salesMonthCount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'} - Ref. ${salesMonthCount} Venda(s)`}
             />
             <DashboardCard
               title="Receber Hoje"
@@ -147,7 +171,9 @@ function DashboardCard({
     <Box
       bg={bgColor}
       borderRadius="$md"
+      flexBasis="48%"
       minWidth="45%"
+      height={140}
       flexGrow={1}
       shadowColor="#000"
       shadowOffset={{ width: 0, height: 2 }}
@@ -156,8 +182,9 @@ function DashboardCard({
       mb="$2"
       onTouchEnd={onPress}
       overflow="hidden"
+      justifyContent="space-between"
     >
-      <HStack justifyContent="space-between" alignItems="flex-start" p="$4">
+      <HStack justifyContent="space-between" alignItems="flex-start" p="$4" flex={1}>
         <VStack>
           <Text fontSize="$4xl" fontWeight="$bold" color="$white" lineHeight="$4xl">
             {value}

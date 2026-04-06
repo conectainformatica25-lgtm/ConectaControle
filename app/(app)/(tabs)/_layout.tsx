@@ -5,13 +5,13 @@ import { useMemo } from 'react';
 export default function TabsLayout() {
   const screenOptions = useMemo(
     () => ({
-      tabBarActiveTintColor: '#5E8BF7',
-      tabBarInactiveTintColor: '#94a3b8',
+      tabBarActiveTintColor: '#FFFFFF',
+      tabBarInactiveTintColor: '#8BA3C2',
       tabBarPosition: 'top' as const,
       tabBarStyle: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1D3B5C',
         borderBottomWidth: 1,
-        borderBottomColor: '#EDF1F9',
+        borderBottomColor: '#13263E',
         height: 64,
         elevation: 0,
         shadowOpacity: 0,
@@ -23,7 +23,7 @@ export default function TabsLayout() {
         marginBottom: 8,
       },
       tabBarIndicatorStyle: {
-        backgroundColor: '#5E8BF7',
+        backgroundColor: '#4BC0C8',
         height: 3,
         borderRadius: 3,
       },
