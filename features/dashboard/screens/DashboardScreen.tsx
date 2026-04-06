@@ -12,6 +12,8 @@ import * as debtService from '@/services/debtService';
 import { listSalesInRange } from '@/services/salesService';
 import { useAuthStore } from '@/store/authStore';
 import { todayDateString, startOfDayIso, endOfDayIso, startOfMonthIso, endOfMonthIso } from '@/utils/dates';
+import { formatBRL } from '@/utils/formatCurrency';
+
 export function DashboardScreen() {
   const company = useAuthStore((s) => s.company);
   const profile = useAuthStore((s) => s.profile);
@@ -44,10 +46,10 @@ export function DashboardScreen() {
       let slMonthCt = 0;
       try {
         const todaySales = await listSalesInRange(startOfDayIso(now), endOfDayIso(now));
-        slToday = todaySales.reduce((acc, s) => acc + s.total, 0);
+        slToday = todaySales.reduce((acc, s) => acc + Number(s.total), 0);
 
         const monthSales = await listSalesInRange(startOfMonthIso(now), endOfMonthIso(now));
-        slMonth = monthSales.reduce((acc, s) => acc + s.total, 0);
+        slMonth = monthSales.reduce((acc, s) => acc + Number(s.total), 0);
         slMonthCt = monthSales.length;
       } catch (err) {
         // Ignore mock/supabase errors if not set up
@@ -106,21 +108,21 @@ export function DashboardScreen() {
           <HStack space="md" flexWrap="wrap">
             <DashboardCard
               title="Vendas Hoje"
-              value={salesToday.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              value={formatBRL(salesToday)}
               bgColor="#17A2B8"
               iconName="shopping-cart"
               footerText="Atualizado agora"
             />
             <DashboardCard
               title="Vendas (Período)"
-              value={salesMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              value={formatBRL(salesMonth)}
               bgColor="#F39C12"
               iconName="bar-chart"
-              footerText={`Ticket Médio R$ ${salesMonthCount > 0 ? (salesMonth/salesMonthCount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'} - Ref. ${salesMonthCount} Venda(s)`}
+              footerText={`Ticket Médio ${salesMonthCount > 0 ? formatBRL(salesMonth/salesMonthCount) : 'R$ 0,00'} - Ref. ${salesMonthCount} Venda(s)`}
             />
             <DashboardCard
               title="Receber Hoje"
-              value={String(dueToday)}
+              value={`${dueToday} Conta${dueToday === 1 ? '' : 's'}`}
               bgColor="#28A745"
               iconName="thumbs-up"
               footerText="Calendário"
@@ -128,7 +130,7 @@ export function DashboardScreen() {
             />
             <DashboardCard
               title="Pagar Hoje"
-              value={String(overdue)}
+              value={`${overdue} Conta${overdue === 1 ? '' : 's'}`}
               bgColor="#DC3545"
               iconName="thumbs-down"
               footerText="Calendário"
