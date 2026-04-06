@@ -33,3 +33,25 @@ salesRouter.post('/sales/process', requireAuth, async (req, res) => {
     client.release();
   }
 });
+
+salesRouter.post('/sales/range', requireAuth, async (req, res) => {
+  const { cid } = (req as AuthedRequest).auth;
+  const { fromIso, toIso } = req.body ?? {};
+  if (!fromIso || !toIso) {
+    res.status(400).json({ error: 'missing_range' });
+    return;
+  }
+  try {
+    const list = await pool.query(
+      `SELECT id, total, payment_method, created_at, customer_id
+       FROM sales
+       WHERE company_id = $1 AND created_at >= $2 AND created_at <= $3
+       ORDER BY created_at DESC`,
+      [cid, fromIso, toIso]
+    );
+    res.json({ items: list.rows });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'error';
+    res.status(400).json({ error: msg });
+  }
+});

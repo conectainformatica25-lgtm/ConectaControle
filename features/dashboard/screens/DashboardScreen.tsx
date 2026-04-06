@@ -1,7 +1,8 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Box, Heading, HStack, Text, VStack } from '@gluestack-ui/themed';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 
 import { AppButton } from '@/components/AppButton';
@@ -60,9 +61,11 @@ export function DashboardScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   return (
     <Screen>
