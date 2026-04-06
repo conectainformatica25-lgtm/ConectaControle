@@ -3,9 +3,11 @@ import { apiGet, apiPost } from '@/services/api/http';
 import { isMockMode } from '@/services/mock/env';
 import {
   createProductForCompany,
+  deleteProductMock,
   getProductsWithVariants,
   seedIfEmpty,
   setVariantQuantityMock,
+  updateProductMock,
 } from '@/services/mock/memoryStore';
 import { supabase } from '@/services/supabase/client';
 import { useAuthStore } from '@/store/authStore';
@@ -139,4 +141,35 @@ export async function updateVariantQuantity(variantId: string, quantity: number)
   }
   const { error } = await supabase.from('product_variants').update({ quantity }).eq('id', variantId);
   if (error) throw error;
+}
+
+export async function updateProduct(id: string, input: { name: string; code: string | null; category: string; purchase_price: number; sale_price: number; }) {
+  if (isMockMode()) {
+    const prof = useAuthStore.getState().profile;
+    if (!prof) throw new Error('no_profile');
+    return updateProductMock(prof.company_id, id, input);
+  }
+  if (isApiMode()) {
+    await apiPost(`/products/${id}/update`, input);
+    return;
+  }
+  const { error } = await supabase.from('products').update(input).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteProduct(id: string) {
+  if (isMockMode()) {
+    const prof = useAuthStore.getState().profile;
+    if (!prof) throw new Error('no_profile');
+    return deleteProductMock(prof.company_id, id);
+  }
+  if (isApiMode()) {
+    await apiPost(`/products/${id}/delete`, {});
+    return;
+  }
+  const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) {
+    if (error.code === '23503') throw new Error('Este produto possui vendas atreladas e não pode ser excluído.');
+    throw error;
+  }
 }

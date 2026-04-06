@@ -1,7 +1,7 @@
 import { isApiMode } from '@/services/api/config';
 import { apiGet, apiPost } from '@/services/api/http';
 import { isMockMode } from '@/services/mock/env';
-import { addCustomer, listCustomersForCompany, seedIfEmpty } from '@/services/mock/memoryStore';
+import { addCustomer, deleteCustomerMock, listCustomersForCompany, seedIfEmpty, updateCustomerMock } from '@/services/mock/memoryStore';
 import { supabase } from '@/services/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import type { Customer } from '@/types/models';
@@ -69,4 +69,32 @@ export async function getCustomer(id: string): Promise<Customer | null> {
   if (error) throw error;
   if (!data) return null;
   return mapCustomer(data as Record<string, unknown>);
+}
+
+export async function updateCustomer(id: string, input: { name: string; phone: string }) {
+  if (isMockMode()) {
+    const prof = useAuthStore.getState().profile;
+    if (!prof) throw new Error('no_profile');
+    return updateCustomerMock(prof.company_id, id, input.name, input.phone);
+  }
+  if (isApiMode()) {
+    await apiPost(`/customers/${id}/update`, input);
+    return;
+  }
+  const { error } = await supabase.from('customers').update({ name: input.name, phone: input.phone }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteCustomer(id: string) {
+  if (isMockMode()) {
+    const prof = useAuthStore.getState().profile;
+    if (!prof) throw new Error('no_profile');
+    return deleteCustomerMock(prof.company_id, id);
+  }
+  if (isApiMode()) {
+    await apiPost(`/customers/${id}/delete`, {});
+    return;
+  }
+  const { error } = await supabase.from('customers').delete().eq('id', id);
+  if (error) throw error;
 }

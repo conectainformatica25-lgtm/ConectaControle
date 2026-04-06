@@ -62,15 +62,36 @@ export function ProductListScreen() {
           renderItem={({ item }) => (
             <Box bg="$white" borderWidth={0} shadowColor="#000" shadowOffset={{ width: 0, height: 2 }} shadowOpacity={0.05} shadowRadius={4} borderRadius="$xl" p="$5" mb="$3">
               <HStack justifyContent="space-between" alignItems="flex-start">
-                <VStack>
+                <VStack flex={1}>
                   <Text fontWeight="$bold" color="$textLight900">{item.name}</Text>
                   <Text size="xs" color="$textLight500">{item.category}</Text>
                 </VStack>
-                {item.code ? (
-                  <Box bg="$backgroundLight100" px="$2" py="$1" borderRadius="$md">
-                    <Text size="xs" color="$textLight600">Cód: {item.code}</Text>
-                  </Box>
-                ) : null}
+                <HStack space="md" alignItems="center">
+                  {item.code ? (
+                    <Box bg="$backgroundLight100" px="$2" py="$1" borderRadius="$md">
+                      <Text size="xs" color="$textLight600">Cód: {item.code}</Text>
+                    </Box>
+                  ) : null}
+                  <Pressable onPress={() => router.push(`/(app)/products/edit/${item.id}` as any)}>
+                    <Box p="$1">
+                      <Text color="$blue500" fontWeight="$bold" size="sm">Editar</Text>
+                    </Box>
+                  </Pressable>
+                  <Pressable onPress={async () => {
+                    try {
+                      setLoading(true);
+                      await productService.deleteProduct(item.id);
+                      load();
+                    } catch (e: any) {
+                      alert(e?.message || "Erro ao excluir produto.");
+                      setLoading(false);
+                    }
+                  }}>
+                    <Box p="$1">
+                      <Text color="$red500" fontWeight="$bold" size="sm">Excluir</Text>
+                    </Box>
+                  </Pressable>
+                </HStack>
               </HStack>
               
               <Box mt="$3" pt="$3" borderTopWidth={1} borderColor="$borderLight50">

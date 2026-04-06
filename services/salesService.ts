@@ -1,7 +1,7 @@
 import { isApiMode } from '@/services/api/config';
 import { apiPost } from '@/services/api/http';
 import { isMockMode } from '@/services/mock/env';
-import { processSaleMock, seedIfEmpty } from '@/services/mock/memoryStore';
+import { listSalesInRangeMock, processSaleMock, seedIfEmpty } from '@/services/mock/memoryStore';
 import { supabase } from '@/services/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import type { PaymentMethod } from '@/types/models';
@@ -88,6 +88,16 @@ export async function processSale(params: {
 }
 
 export async function listSalesInRange(fromIso: string, toIso: string) {
+  if (isMockMode()) {
+    seedIfEmpty();
+    const cid = useAuthStore.getState().profile?.company_id;
+    if (!cid) return [];
+    return listSalesInRangeMock(cid, fromIso, toIso);
+  }
+  if (isApiMode()) {
+    const list = await apiPost<{ items: any[] }>('/sales/range', { fromIso, toIso });
+    return list.items ?? [];
+  }
   const { data, error } = await supabase
     .from('sales')
     .select('id, total, payment_method, created_at, customer_id')

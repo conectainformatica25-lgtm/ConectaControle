@@ -161,6 +161,34 @@ export function addCustomer(cid: string, name: string, phone: string) {
   return id;
 }
 
+export function updateCustomerMock(cid: string, id: string, name: string, phone: string) {
+  const c = mockState.customers.find((x) => x.id === id && x.company_id === cid);
+  if (c) {
+    c.name = name;
+    c.phone = phone;
+  }
+}
+
+export function deleteCustomerMock(cid: string, id: string) {
+  mockState.customers = mockState.customers.filter((x) => !(x.id === id && x.company_id === cid));
+}
+
+export function deleteProductMock(cid: string, id: string) {
+  mockState.products = mockState.products.filter((x) => !(x.id === id && x.company_id === cid));
+  mockState.variants = mockState.variants.filter((x) => !(x.product_id === id && x.company_id === cid));
+}
+
+export function updateProductMock(cid: string, id: string, input: { name: string; code: string | null; category: string; purchase_price: number; sale_price: number; }) {
+  const p = mockState.products.find((x) => x.id === id && x.company_id === cid);
+  if (p) {
+    p.name = input.name;
+    p.code = input.code;
+    p.category = input.category;
+    p.purchase_price = input.purchase_price;
+    p.sale_price = input.sale_price;
+  }
+}    
+
 export function processSaleMock(
   cid: string,
   userId: string,
@@ -228,6 +256,19 @@ export function processSaleMock(
     }
   }
   return saleId;
+}
+
+export function listSalesInRangeMock(cid: string, fromIso: string, toIso: string) {
+  return mockState.sales
+    .filter((s) => s.company_id === cid && s.created_at >= fromIso && s.created_at <= toIso)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .map((s) => ({
+      id: s.id,
+      total: s.total,
+      payment_method: s.payment_method,
+      created_at: s.created_at,
+      customer_id: s.customer_id,
+    }));
 }
 
 export function listInstallmentsMock(cid: string) {

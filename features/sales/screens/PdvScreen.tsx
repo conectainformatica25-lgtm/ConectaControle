@@ -37,6 +37,7 @@ export function PdvScreen() {
   const [msg, setMsg] = useState<string | null>(null);
   
   const [query, setQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState('');
 
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([
@@ -254,23 +255,45 @@ export function PdvScreen() {
             {paymentMethod === 'credit' && (
               <VStack space="md">
                 <Text fontWeight="$bold">Selecionar Cliente</Text>
-                <HStack flexWrap="wrap" space="sm">
-                  {customers.map((c) => (
-                    <Pressable key={c.id} onPress={() => setCustomerId(c.id)}>
-                      <Box
-                        borderWidth={2}
-                        borderColor={customerId === c.id ? '$primary500' : 'transparent'}
-                        bg={customerId === c.id ? '$primary50' : '$backgroundLight100'}
-                        px="$4"
-                        py="$2"
-                        borderRadius="$md"
-                        mb="$2"
-                      >
-                        <Text size="sm" fontWeight={customerId === c.id ? '$bold' : '$normal'} color={customerId === c.id ? '$primary700' : '$textLight600'}>{c.name}</Text>
+                
+                <Input bg="$white" borderRadius="$md" borderColor="$borderLight200" mb="$2">
+                  <InputField 
+                    placeholder="Pesquisar cliente..." 
+                    value={customerQuery} 
+                    onChangeText={setCustomerQuery} 
+                  />
+                </Input>
+
+                {customerQuery.trim().length >= 2 ? (
+                  <HStack flexWrap="wrap" space="sm">
+                    {customers
+                      .filter(c => c.name.toLowerCase().includes(customerQuery.toLowerCase()))
+                      .map((c) => (
+                      <Pressable key={c.id} onPress={() => { setCustomerId(c.id); setCustomerQuery(c.name); }}>
+                        <Box
+                          borderWidth={2}
+                          borderColor={customerId === c.id ? '$primary500' : 'transparent'}
+                          bg={customerId === c.id ? '$primary50' : '$backgroundLight100'}
+                          px="$4"
+                          py="$2"
+                          borderRadius="$md"
+                          mb="$2"
+                        >
+                          <Text size="sm" fontWeight={customerId === c.id ? '$bold' : '$normal'} color={customerId === c.id ? '$primary700' : '$textLight600'}>{c.name}</Text>
+                        </Box>
+                      </Pressable>
+                    ))}
+                  </HStack>
+                ) : (
+                  customerId && customers.find(x => x.id === customerId) ? (
+                    <HStack mb="$2">
+                      <Box borderWidth={2} borderColor="$primary500" bg="$primary50" px="$4" py="$2" borderRadius="$md">
+                        <Text size="sm" fontWeight="$bold" color="$primary700">{customers.find(x => x.id === customerId)?.name}</Text>
                       </Box>
-                    </Pressable>
-                  ))}
-                </HStack>
+                    </HStack>
+                  ) : null
+                )}
+
                 <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
                   <InputField placeholder="Entrada Inicial (R$)" value={down} onChangeText={setDown} keyboardType="decimal-pad" />
                 </Input>
