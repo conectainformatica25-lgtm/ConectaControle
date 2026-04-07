@@ -146,13 +146,6 @@ export function DashboardScreen() {
             />
           </HStack>
 
-          <HStack space="sm" mt="$4">
-            <AppButton
-              variant="outline"
-              label="Configurações"
-              onPress={() => router.push('/(app)/settings')}
-            />
-          </HStack>
           {!isBackendConfigured() ? (
             <Text size="sm" color="$textLight500">
               Defina EXPO_PUBLIC_MOCK=1 (demo), EXPO_PUBLIC_API_URL ou Supabase no .env.

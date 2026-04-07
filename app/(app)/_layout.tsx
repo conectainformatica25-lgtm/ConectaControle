@@ -12,7 +12,6 @@ export default function AppGroupLayout() {
     <SubscriptionGuard>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
         <Stack.Screen name="products/new" />
         <Stack.Screen name="subscription" />
       </Stack>

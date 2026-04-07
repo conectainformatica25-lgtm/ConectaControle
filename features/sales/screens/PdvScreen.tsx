@@ -33,7 +33,6 @@ export function PdvScreen() {
   const [customerId, setCustomerId] = useState('');
   const [down, setDown] = useState('');
   const [parcelas, setParcelas] = useState('3');
-  const [firstDue, setFirstDue] = useState(() => new Date().toISOString().slice(0, 10));
   const [msg, setMsg] = useState<string | null>(null);
   
   const [query, setQuery] = useState('');
@@ -94,7 +93,7 @@ export function PdvScreen() {
         const downVal = Number(down.replace(',', '.')) || 0;
         const n = Math.max(1, parseInt(parcelas, 10) || 1);
         const principal = Math.max(0, total - downVal);
-        const inst = buildMonthlyInstallments(principal, n, new Date(firstDue + 'T12:00:00'));
+        const inst = buildMonthlyInstallments(principal, n, new Date());
         await salesService.processSale({
           payment_method: 'credit',
           customer_id: customerId,
@@ -299,9 +298,6 @@ export function PdvScreen() {
                 </Input>
                 <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
                   <InputField placeholder="Qtd. de Parcelas" value={parcelas} onChangeText={setParcelas} keyboardType="number-pad" />
-                </Input>
-                <Input bg="$backgroundLight50" borderColor="$borderLight200" borderRadius="$md">
-                  <InputField placeholder="Vencimento Inicial (AAAA-MM-DD)" value={firstDue} onChangeText={setFirstDue} />
                 </Input>
               </VStack>
             )}

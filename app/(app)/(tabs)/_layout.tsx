@@ -76,6 +76,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <FontAwesome name="bar-chart" size={22} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Config.',
+          tabBarIcon: ({ color }) => <FontAwesome name="cog" size={22} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

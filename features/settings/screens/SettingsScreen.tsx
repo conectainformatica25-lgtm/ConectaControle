@@ -67,12 +67,7 @@ export function SettingsScreen() {
   return (
     <Screen scroll>
       <VStack space="lg" py="$4">
-        <HStack alignItems="center" space="md">
-          {router.canGoBack() && (
-            <AppButton variant="outline" label="Voltar" onPress={() => router.back()} />
-          )}
-          <Heading size="lg">Configurações</Heading>
-        </HStack>
+        <Heading size="lg">Configurações</Heading>
         <Box>
           <Text fontWeight="$bold">Conta</Text>
           <Text>{profile?.full_name}</Text>
