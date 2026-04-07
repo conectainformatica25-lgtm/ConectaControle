@@ -3,7 +3,7 @@ import { Box, Heading, HStack, Text, VStack } from '@gluestack-ui/themed';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView } from 'react-native';
+import { RefreshControl, ScrollView, Image } from 'react-native';
 
 import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
@@ -77,7 +77,15 @@ export function DashboardScreen() {
       >
         <VStack space="lg" py="$4">
           <Box>
-            <Heading size="xl">{company?.name ?? 'Loja'}</Heading>
+            <HStack alignItems="center" space="md">
+              {company?.brand_primary?.startsWith('data:image') && (
+                <Image
+                  source={{ uri: company.brand_primary }}
+                  style={{ width: 48, height: 48, borderRadius: 8, resizeMode: 'contain' }}
+                />
+              )}
+              <Heading size="xl">{company?.name ?? 'Loja'}</Heading>
+            </HStack>
             <Text color="$textLight500">Olá, {profile?.full_name ?? '—'}</Text>
           </Box>
           
@@ -129,7 +137,7 @@ export function DashboardScreen() {
               onPress={() => router.push('/(app)/(tabs)/debts')}
             />
             <DashboardCard
-              title="Pagar Hoje"
+              title="Atrasadas"
               value={`${overdue} Conta${overdue === 1 ? '' : 's'}`}
               bgColor="#DC3545"
               iconName="thumbs-down"
@@ -139,7 +147,6 @@ export function DashboardScreen() {
           </HStack>
 
           <HStack space="sm" mt="$4">
-            <AppButton label="Abrir PDV" onPress={() => router.push('/(app)/(tabs)/pdv')} />
             <AppButton
               variant="outline"
               label="Configurações"

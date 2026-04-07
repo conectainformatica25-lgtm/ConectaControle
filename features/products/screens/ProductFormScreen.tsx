@@ -1,4 +1,4 @@
-import { Box, Heading, Input, InputField, Text, VStack } from '@gluestack-ui/themed';
+import { Box, Heading, Input, InputField, Text, VStack, HStack } from '@gluestack-ui/themed';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
@@ -50,7 +50,12 @@ export function ProductFormScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
           <VStack space="md" py="$4">
-            <Heading size="lg" mb="$2">Novo Produto</Heading>
+            <HStack alignItems="center" space="md" mb="$2">
+              {router.canGoBack() && (
+                <AppButton variant="outline" label="Voltar" onPress={() => router.back()} />
+              )}
+              <Heading size="lg">Novo Produto</Heading>
+            </HStack>
             
             <Box bg="$white" p="$5" borderRadius="$lg" shadowColor="#000" shadowOffset={{ width: 0, height: 2 }} shadowOpacity={0.05} shadowRadius={4}>
               <VStack space="md">

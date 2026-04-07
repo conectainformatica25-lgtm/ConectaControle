@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { Box, Heading, HStack, Text, VStack, Divider, Image, Spinner } from '@gluestack-ui/themed';
 import { useState, useEffect } from 'react';
 import { Alert, Clipboard } from 'react-native';
+import { router } from 'expo-router';
 import { apiPost, apiGet } from '@/services/api/http';
 
 export function SubscriptionScreen() {
@@ -14,7 +15,7 @@ export function SubscriptionScreen() {
   const [pixData, setPixData] = useState<{ text: string; imageUrl?: string; orderId?: string } | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (showQR && pixData?.orderId) {
       interval = setInterval(async () => {
         try {
@@ -84,8 +85,13 @@ export function SubscriptionScreen() {
     <Screen scroll>
       <VStack space="xl" py="$6">
         <Box>
-          <Heading size="xl" color="$primary500">Assinatura</Heading>
-          <Text color="$textLight500">Gerencie seu acesso ao ConectaControle</Text>
+          <HStack alignItems="center" space="md">
+            {router.canGoBack() && (
+              <AppButton variant="outline" label="Voltar" onPress={() => router.back()} />
+            )}
+            <Heading size="xl" color="$primary500">Assinatura</Heading>
+          </HStack>
+          <Text color="$textLight500" mt="$1">Gerencie seu acesso ao ConectaControle</Text>
         </Box>
 
         <Box bg="$white" p="$5" borderRadius="$xl" borderWidth={1} borderColor="$borderLight50">
