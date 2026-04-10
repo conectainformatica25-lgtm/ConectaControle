@@ -8,12 +8,13 @@ import {
 } from '@gluestack-ui/themed';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Linking } from 'react-native';
 
 import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import * as authService from '@/services/authService';
 import { isMockMode } from '@/services/mock/env';
+import { API_BASE_URL } from '@/services/api/config';
 
 export function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -34,10 +35,24 @@ export function LoginScreen() {
     }
   }
 
+  function openAdminPanel() {
+    const base = API_BASE_URL.replace(/\/api\/?$/, '');
+    Linking.openURL(`${base}/admin`);
+  }
+
   return (
     <Screen scroll>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <VStack space="xl" py="$8">
+          {/* Botão discreto do painel admin */}
+          <Box position="absolute" right={0} top={0} zIndex={10}>
+            <Pressable onPress={openAdminPanel} hitSlop={12}>
+              <Text size="xs" color="$textLight400" style={{ opacity: 0.5 }}>
+                ⚙ Admin
+              </Text>
+            </Pressable>
+          </Box>
+
           <Box>
             <Heading size="xl" color="$primary500">
               ConectaControle

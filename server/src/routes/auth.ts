@@ -26,6 +26,8 @@ authRouter.post('/login', async (req, res, next) => {
       res.status(401).json({ error: 'invalid_credentials' });
       return;
     }
+    // Atualizar last_login_at
+    await pool.query(`UPDATE users SET last_login_at = now() WHERE id = $1`, [row.id]);
     const token = signToken(row.id, row.company_id);
     res.json({
       token,
@@ -65,9 +67,11 @@ authRouter.post('/register-company', async (req, res, next) => {
     await client.query('BEGIN');
 
     console.log('[Auth] Criando empresa...');
+    const trialEnds = new Date();
+    trialEnds.setDate(trialEnds.getDate() + 7);
     const c = await client.query(
-      `INSERT INTO companies (name, slug) VALUES ($1, $2) RETURNING id`,
-      [String(companyName).trim(), slug ? String(slug).trim() : null]
+      `INSERT INTO companies (name, slug, status, trial_ends_at) VALUES ($1, $2, 'trial', $3) RETURNING id`,
+      [String(companyName).trim(), slug ? String(slug).trim() : null, trialEnds.toISOString()]
     );
     const companyId = c.rows[0].id;
 

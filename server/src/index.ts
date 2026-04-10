@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { pool } from './db.js';
 import { authRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
@@ -11,9 +13,15 @@ import { debtsRouter } from './routes/debts.js';
 import { companyRouter } from './routes/company.js';
 import { reportsRouter } from './routes/reports.js';
 import { paymentRouter } from './routes/payment.js';
+import { adminRouter } from './routes/admin.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
+
+// Servir arquivos estáticos do painel admin
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/admin', express.static(path.join(__dirname, '..', '..', 'public', 'admin')));
 
 app.use(cors({
   origin: true,
@@ -57,6 +65,7 @@ app.use('/api', debtsRouter);
 app.use('/api', companyRouter);
 app.use('/api', reportsRouter);
 app.use('/api', paymentRouter);
+app.use('/api', adminRouter);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[Unhandled Error]', err);

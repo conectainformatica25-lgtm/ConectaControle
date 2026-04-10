@@ -23,6 +23,7 @@ export type Company = {
   status: SubscriptionStatus;
   trial_ends_at: string;
   expires_at: string | null;
+  admin_blocked: boolean;
 };
 
 export type Product = {

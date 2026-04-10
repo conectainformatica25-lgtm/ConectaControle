@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConectaControle — Painel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-card-hover: rgba(31, 41, 55, 0.8);
+      --border: rgba(75, 85, 99, 0.3);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --gradient-1: linear-gradient(135deg, #3b82f6, #06b6d4);
+      --gradient-2: linear-gradient(135deg, #10b981, #059669);
+      --gradient-3: linear-gradient(135deg, #f59e0b, #d97706);
+      --gradient-4: linear-gradient(135deg, #ef4444, #dc2626);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ─────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+      animation: bgFloat 20s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes bgFloat {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(2%, -1%) rotate(1deg); }
+      66% { transform: translate(-1%, 2%) rotate(-1deg); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Login Screen ───────────────────────────────────── */
+    #login-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow);
+      animation: fadeInUp 0.6s ease;
+    }
+
+    .login-card .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-card .logo h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-card .logo p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary {
+      background: var(--gradient-1);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-xs);
+      padding: 12px;
+      color: var(--accent-red);
+      font-size: 13px;
+      text-align: center;
+      margin-bottom: 16px;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    /* ── Dashboard ───────────────────────────────────── */
+    #dashboard-screen {
+      display: none;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .topbar h1 {
+      font-size: 26px;
+      font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .topbar .meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar .meta .time {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .topbar .meta .refresh-indicator {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .btn-logout {
+      padding: 8px 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-xs);
+      color: var(--accent-red);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    /* ── Stats Cards ─────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-card:nth-child(1)::before { background: var(--gradient-1); }
+    .stat-card:nth-child(2)::before { background: var(--gradient-2); }
+    .stat-card:nth-child(3)::before { background: var(--gradient-3); }
+    .stat-card:nth-child(4)::before { background: var(--gradient-4); }
+
+    .stat-card .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card:nth-child(1) .stat-icon { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+    .stat-card:nth-child(2) .stat-icon { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .stat-card:nth-child(3) .stat-icon { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+    .stat-card:nth-child(4) .stat-icon { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+    .stat-card .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* ── Filters ─────────────────────────────────────── */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      max-width: 400px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .search-box::before {
+      content: '🔍';
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      opacity: 0.5;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+    }
+
+    .filter-btn.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: var(--accent-blue);
+    }
+
+    /* ── Table ───────────────────────────────────────── */
+    .table-container {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .table-header .count {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      transition: all 0.2s ease;
+      animation: slideIn 0.4s ease backwards;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    tbody td {
+      padding: 16px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(75, 85, 99, 0.15);
+      white-space: nowrap;
+    }
+
+    .company-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .company-slug {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    /* ── Badges ──────────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .badge-active {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+    }
+    .badge-active .badge-dot { background: #34d399; }
+
+    .badge-trial {
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+    }
+    .badge-trial .badge-dot { background: #60a5fa; }
+
+    .badge-overdue, .badge-expired {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+    }
+    .badge-overdue .badge-dot, .badge-expired .badge-dot { background: #f87171; }
+
+    .badge-blocked {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .badge-blocked .badge-dot { background: #fca5a5; }
+
+    /* ── Days Badge ──────────────────────────────────── */
+    .days-badge {
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .days-ok { color: var(--accent-green); }
+    .days-warning { color: var(--accent-yellow); }
+    .days-danger { color: var(--accent-red); }
+
+    /* ── Action Buttons ──────────────────────────────── */
+    .action-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-xs);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-block {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-block:hover { background: rgba(239, 68, 68, 0.25); }
+
+    .btn-unblock {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .btn-unblock:hover { background: rgba(16, 185, 129, 0.25); }
+
+    /* ── Activity Indicator ──────────────────────────── */
+    .activity-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .activity-online { background: var(--accent-green); box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+    .activity-recent { background: var(--accent-yellow); }
+    .activity-inactive { background: var(--text-muted); }
+
+    /* ── Empty State ─────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state .emoji { font-size: 48px; margin-bottom: 16px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Loading ─────────────────────────────────────── */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    .loading .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      #dashboard-screen { padding: 16px; }
+      .topbar h1 { font-size: 20px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stat-card { padding: 16px; }
+      .stat-card .stat-value { font-size: 28px; }
+      .table-container { overflow-x: auto; }
+      table { min-width: 800px; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .login-card { padding: 32px 24px; }
+    }
+
+    /* ── Toast ────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+      z-index: 1000;
+      animation: fadeInUp 0.3s ease;
+      box-shadow: var(--shadow);
+    }
+    .toast-success { background: var(--accent-green); }
+    .toast-error { background: var(--accent-red); }
+  </style>
+</head>
+<body>
+
+  <!-- ════════ LOGIN SCREEN ════════ -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="logo">
+        <h1>🛡️ ConectaControle</h1>
+        <p>Painel Administrativo</p>
+      </div>
+      <div id="login-error" class="login-error" style="display:none;"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Usuário</label>
+          <input type="text" id="input-user" placeholder="admin" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="input-pass" placeholder="••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Entrar no Painel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ════════ DASHBOARD SCREEN ════════ -->
+  <div id="dashboard-screen">
+    <div class="topbar">
+      <div>
+        <h1>🛡️ Painel Admin</h1>
+      </div>
+      <div class="meta">
+        <div class="refresh-indicator" title="Auto-refresh ativo"></div>
+        <span class="time" id="last-update"></span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🏢</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total de Empresas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="stat-active">0</div>
+        <div class="stat-label">Ativas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value" id="stat-trial">0</div>
+        <div class="stat-label">Em Trial</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🚫</div>
+        <div class="stat-value" id="stat-blocked">0</div>
+        <div class="stat-label">Bloqueadas / Vencidas</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Buscar empresa...">
+      </div>
+      <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">Todos</button>
+      <button class="filter-btn" data-filter="active" onclick="setFilter('active', this)">Ativos</button>
+      <button class="filter-btn" data-filter="trial" onclick="setFilter('trial', this)">Trial</button>
+      <button class="filter-btn" data-filter="overdue" onclick="setFilter('overdue', this)">Vencidos</button>
+      <button class="filter-btn" data-filter="blocked" onclick="setFilter('blocked', this)">Bloqueados</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <h2>Empresas Cadastradas</h2>
+        <span class="count" id="table-count"></span>
+      </div>
+      <div id="table-body">
+        <div class="loading"><div class="spinner"></div><p style="margin-top:12px;">Carregando...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────
+    let adminToken = localStorage.getItem('admin_token') || '';
+    let companies = [];
+    let currentFilter = 'all';
+    let searchTerm = '';
+    let refreshInterval = null;
+
+    // API base (same origin)
+    const API = window.location.origin + '/api';
+
+    // ── Init ──────────────────────────────────────────
+    if (adminToken) {
+      showDashboard();
+    }
+
+    // ── Login ─────────────────────────────────────────
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = document.getElementById('input-user').value.trim();
+      const pass = document.getElementById('input-pass').value;
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+
+      try {
+        const res = await fetch(`${API}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, password: pass })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          adminToken = data.token;
+          localStorage.setItem('admin_token', adminToken);
+          showDashboard();
+        } else {
+          errEl.textContent = 'Usuário ou senha inválidos.';
+          errEl.style.display = 'block';
+        }
+      } catch (err) {
+        errEl.textContent = 'Erro de conexão com o servidor.';
+        errEl.style.display = 'block';
+      }
+    });
+
+    // ── Show Dashboard ────────────────────────────────
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-screen').style.display = 'block';
+      loadData();
+      refreshInterval = setInterval(loadData, 30000);
+    }
+
+    function logout() {
+      adminToken = '';
+      localStorage.removeItem('admin_token');
+      clearInterval(refreshInterval);
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('dashboard-screen').style.display = 'none';
+    }
+
+    // ── Load Data ─────────────────────────────────────
+    async function loadData() {
+      try {
+        const [companiesRes, statsRes] = await Promise.all([
+          fetch(`${API}/admin/companies`, { headers: { 'x-admin-secret': adminToken } }),
+          fetch(`${API}/admin/stats`, { headers: { 'x-admin-secret': adminToken } })
+        ]);
+
+        if (companiesRes.status === 401) {
+          logout();
+          return;
+        }
+
+        const companiesData = await companiesRes.json();
+        const statsData = await statsRes.json();
+
+        companies = companiesData.companies || [];
+
+        // Update stats
+        document.getElementById('stat-total').textContent = statsData.total || 0;
+        document.getElementById('stat-active').textContent = statsData.active || 0;
+        document.getElementById('stat-trial').textContent = statsData.trial || 0;
+        document.getElementById('stat-blocked').textContent = statsData.blocked_or_overdue || 0;
+
+        // Update time
+        document.getElementById('last-update').textContent = 
+          'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+
+        renderTable();
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      }
+    }
+
+    // ── Filter ────────────────────────────────────────
+    function setFilter(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchTerm = e.target.value.toLowerCase();
+      renderTable();
+    });
+
+    // ── Render Table ──────────────────────────────────
+    function renderTable() {
+      let filtered = [...companies];
+
+      // Apply filter
+      if (currentFilter === 'active') {
+        filtered = filtered.filter(c => c.status === 'active' && !c.admin_blocked);
+      } else if (currentFilter === 'trial') {
+        filtered = filtered.filter(c => c.status === 'trial' && !c.admin_blocked);
+      } else if (currentFilter === 'overdue') {
+        filtered = filtered.filter(c => c.is_expired || c.status === 'overdue');
+      } else if (currentFilter === 'blocked') {
+        filtered = filtered.filter(c => c.admin_blocked);
+      }
+
+      // Apply search
+      if (searchTerm) {
+        filtered = filtered.filter(c =>
+          (c.name || '').toLowerCase().includes(searchTerm) ||
+          (c.slug || '').toLowerCase().includes(searchTerm)
+        );
+      }
+
+      document.getElementById('table-count').textContent = `${filtered.length} empresa${filtered.length !== 1 ? 's' : ''}`;
+
+      if (filtered.length === 0) {
+        document.getElementById('table-body').innerHTML = `
+          <div class="empty-state">
+            <div class="emoji">📭</div>
+            <p>Nenhuma empresa encontrada.</p>
+          </div>`;
+        return;
+      }
+
+      let html = `<table>
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Status</th>
+            <th>Dias Restantes</th>
+            <th>Cadastro</th>
+            <th>Última Atividade</th>
+            <th>Usuários</th>
+            <th>Produtos</th>
+            <th>Vendas</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      filtered.forEach((c, i) => {
+        const statusBadge = getStatusBadge(c);
+        const daysBadge = getDaysBadge(c);
+        const activityInfo = getActivityInfo(c);
+        const actionBtn = getActionButton(c);
+        const createdAt = formatDate(c.created_at);
+
+        html += `
+          <tr style="animation-delay: ${i * 0.05}s">
+            <td>
+              <div class="company-name">${escapeHtml(c.name)}</div>
+              ${c.slug ? `<div class="company-slug">${escapeHtml(c.slug)}</div>` : ''}
+            </td>
+            <td>${statusBadge}</td>
+            <td>${daysBadge}</td>
+            <td style="color: var(--text-secondary); font-size: 13px;">${createdAt}</td>
+            <td>${activityInfo}</td>
+            <td style="text-align: center; font-weight: 600;">${c.total_users}</td>
+            <td style="text-align: center; font-weight: 600;">${c.total_products}</td>
+            <td style="text-align: center; font-weight: 600;">${c.total_sales}</td>
+            <td>${actionBtn}</td>
+          </tr>`;
+      });
+
+      html += '</tbody></table>';
+      document.getElementById('table-body').innerHTML = html;
+    }
+
+    // ── Helpers ───────────────────────────────────────
+    function getStatusBadge(c) {
+      if (c.admin_blocked) {
+        return `<span class="badge badge-blocked"><span class="badge-dot"></span>BLOQUEADO</span>`;
+      }
+      if (c.status === 'active') {
+        return `<span class="badge badge-active"><span class="badge-dot"></span>ATIVO</span>`;
+      }
+      if (c.status === 'trial') {
+        return `<span class="badge badge-trial"><span class="badge-dot"></span>TRIAL</span>`;
+      }
+      return `<span class="badge badge-overdue"><span class="badge-dot"></span>VENCIDO</span>`;
+    }
+
+    function getDaysBadge(c) {
+      if (c.admin_blocked) {
+        return `<span class="days-badge days-danger">—</span>`;
+      }
+      const days = c.days_remaining;
+      if (days <= 0) {
+        return `<span class="days-badge days-danger">Expirado</span>`;
+      }
+      if (days <= 3) {
+        return `<span class="days-badge days-danger">${days} dia${days > 1 ? 's' : ''}</span>`;
+      }
+      if (days <= 7) {
+        return `<span class="days-badge days-warning">${days} dias</span>`;
+      }
+      return `<span class="days-badge days-ok">${days} dias</span>`;
+    }
+
+    function getActivityInfo(c) {
+      if (!c.last_activity) {
+        return `<span style="color: var(--text-muted); font-size: 13px;">Nunca acessou</span>`;
+      }
+      const lastLogin = new Date(c.last_activity);
+      const now = new Date();
+      const diffHours = (now - lastLogin) / (1000 * 60 * 60);
+
+      let dotClass = 'activity-inactive';
+      let label = '';
+      if (diffHours < 1) {
+        dotClass = 'activity-online';
+        label = 'Agora';
+      } else if (diffHours < 24) {
+        dotClass = 'activity-online';
+        label = `${Math.floor(diffHours)}h atrás`;
+      } else if (diffHours < 72) {
+        dotClass = 'activity-recent';
+        const days = Math.floor(diffHours / 24);
+        label = `${days} dia${days > 1 ? 's' : ''} atrás`;
+      } else {
+        dotClass = 'activity-inactive';
+        label = formatDate(c.last_activity);
+      }
+
+      return `<span class="activity-dot ${dotClass}"></span><span style="font-size:13px;">${label}</span>`;
+    }
+
+    function getActionButton(c) {
+      if (c.admin_blocked) {
+        return `<button class="action-btn btn-unblock" onclick="toggleBlock('${c.id}', false)">
+          Desbloquear
+        </button>`;
+      }
+      return `<button class="action-btn btn-block" onclick="toggleBlock('${c.id}', true)">
+        Bloquear
+      </button>`;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    // ── Block / Unblock ───────────────────────────────
+    async function toggleBlock(companyId, block) {
+      const action = block ? 'block' : 'unblock';
+      const confirmMsg = block
+        ? 'Tem certeza que deseja BLOQUEAR esta empresa? Ela não poderá acessar o sistema.'
+        : 'Tem certeza que deseja DESBLOQUEAR esta empresa?';
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`${API}/admin/companies/${companyId}/${action}`, {
+          method: 'POST',
+          headers: { 'x-admin-secret': adminToken }
+        });
+
+        if (res.ok) {
+          showToast(block ? 'Empresa bloqueada!' : 'Empresa desbloqueada!', 'success');
+          await loadData();
+        } else {
+          showToast('Erro ao realizar operação.', 'error');
+        }
+      } catch (err) {
+        showToast('Erro de conexão.', 'error');
+      }
+    }
+
+    // ── Toast ─────────────────────────────────────────
+    function showToast(message, type = 'success') {
+      const existing = document.querySelector('.toast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

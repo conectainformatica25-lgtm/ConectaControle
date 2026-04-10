@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS companies (
   brand_primary text,
   brand_secondary text,
   low_stock_threshold int NOT NULL DEFAULT 5,
+  status text NOT NULL DEFAULT 'trial',
+  trial_ends_at timestamptz NOT NULL DEFAULT (now() + interval '7 days'),
+  expires_at timestamptz,
+  admin_blocked boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -21,6 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash text NOT NULL,
   full_name text,
   role text NOT NULL CHECK (role IN ('admin', 'employee')),
+  last_login_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
