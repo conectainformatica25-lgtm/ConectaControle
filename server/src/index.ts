@@ -21,7 +21,14 @@ const port = Number(process.env.PORT ?? 4000);
 // Servir arquivos estáticos do painel admin
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-app.use('/admin', express.static(path.join(__dirname, '..', '..', 'public', 'admin')));
+const resolvedAdminPath = path.join(__dirname, '..', 'public', 'admin');
+
+app.use('/admin', express.static(resolvedAdminPath));
+
+// Fallback para garantir que /admin sirva o index.html
+app.get('/admin', (_req, res) => {
+  res.sendFile(path.join(resolvedAdminPath, 'index.html'));
+});
 
 app.use(cors({
   origin: true,
