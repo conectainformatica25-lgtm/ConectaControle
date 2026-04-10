@@ -72,6 +72,39 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ error: 'internal_error', message: err.message });
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`ConectaControle API em http://0.0.0.0:${port}`);
+// ── Auto-migração: adiciona colunas novas se não existirem ─────────
+async function runMigrations() {
+  try {
+    console.log('[Migrations] Verificando colunas...');
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='status') THEN
+          ALTER TABLE companies ADD COLUMN status text NOT NULL DEFAULT 'trial';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='trial_ends_at') THEN
+          ALTER TABLE companies ADD COLUMN trial_ends_at timestamptz NOT NULL DEFAULT (now() + interval '7 days');
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='expires_at') THEN
+          ALTER TABLE companies ADD COLUMN expires_at timestamptz;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='companies' AND column_name='admin_blocked') THEN
+          ALTER TABLE companies ADD COLUMN admin_blocked boolean NOT NULL DEFAULT false;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='last_login_at') THEN
+          ALTER TABLE users ADD COLUMN last_login_at timestamptz;
+        END IF;
+      END $$;
+    `);
+    console.log('[Migrations] ✅ Colunas verificadas/adicionadas com sucesso.');
+  } catch (err) {
+    console.error('[Migrations] ❌ Erro ao rodar migrações:', err);
+  }
+}
+
+// Rodar migrações e depois iniciar o servidor
+runMigrations().then(() => {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`ConectaControle API em http://0.0.0.0:${port}`);
+  });
 });
