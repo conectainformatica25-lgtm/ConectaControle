@@ -1,6 +1,10 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { useMemo } from 'react';
+import { Pressable, Alert } from 'react-native';
+
+import { useAuthStore } from '@/store/authStore';
+import * as authService from '@/services/authService';
 
 export default function TabsLayout() {
   const screenOptions = useMemo(
@@ -31,6 +35,12 @@ export default function TabsLayout() {
     }),
     []
   );
+
+  async function handleSignOut() {
+    await authService.signOut();
+    useAuthStore.getState().signOutLocal();
+    router.replace('/(auth)/login');
+  }
 
   return (
     <Tabs screenOptions={screenOptions}>
@@ -81,6 +91,21 @@ export default function TabsLayout() {
         options={{
           title: 'Config.',
           tabBarIcon: ({ color }) => <FontAwesome name="cog" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="logout"
+        options={{
+          title: 'Sair',
+          tabBarIcon: ({ color }) => <FontAwesome name="sign-out" size={22} color={color} />,
+          tabBarButton: ({ style, children }) => (
+            <Pressable
+              style={style as any}
+              onPress={handleSignOut}
+            >
+              {children}
+            </Pressable>
+          ),
         }}
       />
     </Tabs>

@@ -32,6 +32,7 @@ function mapCompany(row: Record<string, unknown>): Company {
     status: (row.status as any) ?? 'trial',
     trial_ends_at: trialEndsStr,
     expires_at: (row.expires_at as string) ?? null,
+    admin_blocked: Boolean(row.admin_blocked ?? false),
   };
 }
 
